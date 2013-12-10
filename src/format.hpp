@@ -77,8 +77,10 @@ public:
 	static const mode_t DEFAULT_MODE = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 	
 	ofile() = default;
+	
 	ofile(const ofile&) = delete;
 	ofile& operator=(const ofile&) = delete;
+	
 	ofile(ofile&& other) {
 		std::swap(fd, other.fd);
 	}
@@ -390,7 +392,7 @@ void writef(const std::string& formatstring, const T&...args) {
 #ifdef DLO2_USE_POSIX
 	write(1, static_cast<const void*>(buffer.c_str()), buffer.size());
 #else
-	// Don't use this if you don't have to:
+	// Don't use this if you don't have too:
 	std::cout << buffer << std::flush;
 #endif
 }
