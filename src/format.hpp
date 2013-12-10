@@ -24,7 +24,7 @@
 namespace dlo2 {
 
 /**
-	 * Create a string from a function-template, that behaves like a sane and typesafe sprintf.
+ * Create a string from a function-template, that behaves like a sane and typesafe sprintf.
  *
  * To get format-support for your class simply create a function in it's namespace:
  * void print_to_string(std::string& output, YOURCLASS arg, const format_data& formatting)
