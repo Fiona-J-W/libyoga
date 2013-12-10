@@ -23,7 +23,12 @@
 
 namespace dlo2 {
 
-
+/**
+	 * Create a string from a function-template, that behaves like a sane and typesafe sprintf.
+ *
+ * To get format-support for your class simply create a function in it's namespace:
+ * void print_to_string(std::string& output, YOURCLASS arg, const format_data& formatting)
+ */
 template<typename...T>
 std::string format(const std::string& format, const T&...args);
 
@@ -48,6 +53,19 @@ public:
 	void writef(const std::string& formatstring, const T&...args) {
 		static_cast<Derived*>(this)->write(format(formatstring, args...));
 	}
+};
+
+class string_output : public output_base<string_output> {
+	std::string string;
+public:
+	string_output(std::string other) : string{std::move(other)} {}
+	
+	void write(const std::string data) {
+		string.append(data);
+	}
+	
+	std::string str() const & { return string; }
+	std::string str() && { return std::move(string); }
 };
 
 #ifdef DLO2_USE_POSIX
@@ -332,7 +350,8 @@ void format_impl(const std::string& formatstring, std::string& output,
 			++formatslice_end;
 			format_data data{formatslice_begin, formatslice_end, print_index};
 			if(data.index >= ArraySize) {
-				throw std::invalid_argument{"formatstring requests nonexisting argument"};
+				throw std::invalid_argument{
+					"formatstring requests nonexisting argument"};
 			}
 			printers[data.index]->print(output, data);
 			formatslice_begin = formatslice_end;
