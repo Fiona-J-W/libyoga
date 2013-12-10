@@ -10,11 +10,15 @@
 #include <cstdio>
 #include <iostream>
 #include <stdexcept>
+#include <system_error>
 #include <string>
 #include <type_traits>
 
 #ifdef DLO2_USE_POSIX
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #endif
 
 namespace dlo2 {
@@ -32,7 +36,81 @@ template<typename...T>
 void writefln(std::string format, const T&...args);
 
 
+template<typename Derived>
+class output_base {
+public:
+	template<typename...T>
+	void writefln(const std::string& formatstring, const T&...args) {
+		static_cast<Derived*>(this)->write(format(formatstring+'\n', args...));
+	}
+	
+	template<typename...T>
+	void writef(const std::string& formatstring, const T&...args) {
+		static_cast<Derived*>(this)->write(format(formatstring, args...));
+	}
+};
 
+#ifdef DLO2_USE_POSIX
+class ofile : public output_base<ofile> {
+	int fd = -1;
+public:
+	
+	static const int DEFAULT_FLAGS =  O_WRONLY | O_CREAT | O_TRUNC;
+	static const mode_t DEFAULT_MODE = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+	
+	ofile() = default;
+	ofile(const ofile&) = delete;
+	ofile(ofile&&) = default;
+	ofile& operator=(const ofile&) = delete;
+	ofile& operator=(ofile&&) = default;
+	
+	explicit ofile(const char * const filename, int flags = DEFAULT_FLAGS,
+			mode_t mode = DEFAULT_MODE) {
+		if(!open(filename, flags, mode)) {
+			throw std::system_error{std::error_code{}, "could not open file"};
+		}
+	}
+	explicit ofile(const std::string& str, int flags = DEFAULT_FLAGS, mode_t mode = DEFAULT_MODE)
+		: ofile{str.c_str(), flags, mode} {}
+	
+	~ofile() {
+		close();
+	}
+	
+	bool open(const char * const filename, int flags = DEFAULT_FLAGS, mode_t mode = DEFAULT_MODE) {
+		close();
+		fd = ::open(filename, flags, mode);
+		return fd != -1;
+	}
+	bool open(const std::string& filename, int flags = DEFAULT_FLAGS, mode_t mode = DEFAULT_MODE) {
+		return open(filename.c_str(), flags, mode);
+	}
+	
+	void write(const std::string& str) {
+		if(fd == -1) {
+			throw std::system_error{std::error_code{}, "ofile is closed"};
+		}
+		::write(fd, static_cast<const void*>(str.c_str()), str.size());
+	};
+	
+	bool is_open() { return fd != -1; }
+	
+	void close() {
+		if(fd != -1) {
+			::close(fd);
+			fd = -1;
+		}
+	}
+	
+	int sync() {
+		if (fd != -1) {
+			return fsync(fd);
+		}
+		else return -1;
+	}
+};
+
+#endif
 
 ////////////////////////////////////////////////////////////////////////
 //                   Implementation starts here                       //
@@ -100,11 +178,13 @@ using printer_list = std::array<printer_interface const*, Size>;
 
 template<typename T>
 class printer : public printer_interface {
-	const T* value;
+	const T* value = nullptr;
 public:
+	printer() = default;
 	printer(const T& value) : value{&value} {}
+	printer& operator=(const T& value) {this->value = &value; return *this;}
 	void set_value(const T& new_value) {value = &new_value;}
-	void print(std::string& output, const format_data& format_data) const override {
+	void print(std::string& output, const format_data& format_data) const final override {
 		print_to_string(output, *value, format_data);
 	}
 };
@@ -217,7 +297,8 @@ void print_to_string(std::string& output, char const* value, const format_data& 
 template<size_t Index = 0, size_t ArraySize, typename Arg, typename...Args>
 void prepare_printers(printer_list<ArraySize>& array,
 		const Arg& arg, const Args&... args) {
-	thread_local static printer<Arg> printer{arg};
+	thread_local static printer<Arg> printer{};
+	printer = arg;
 	array.at(Index) = &printer;
 	prepare_printers<Index + 1>(array, args...);
 }

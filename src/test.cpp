@@ -9,6 +9,11 @@ int main() {
 	dlo2::writefln("char*: %s, char* as ptr: 0x%p, int*: 0x%p", "foo", "bar", &tmp);
 	dlo2::writefln("uintptr_t: %_0-16s, casted ptr: %_0-16s", uintptr_t{345}, uintptr_t("foobar"));
 	
+	dlo2::ofile file{"test.txt"};
+	file.writef("some call to writef with parameter %s - ", 3);
+	file.writefln("some call to writefln with parameter %s", 42);
+	
+	
 	//std::cout << dlo2::format(
 	//		"let's print something: %s, %s. and a std::string: %s, and ints: %s, uint: %s\n",
 	//		"foobar",'c', std::string{"some string"}, 42, 1337u);
