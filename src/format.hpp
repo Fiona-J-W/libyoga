@@ -235,13 +235,13 @@ public:
 	}
 };
 
-void print_to_string(std::string& output, const std::string& value, const format_data& data) {
+inline void print_to_string(std::string& output, const std::string& value, const format_data& data) {
 	if(data.specifier == 's') {
 		output.append(value);
 	}
 	else throw std::invalid_argument{"invlid format-specifier for std::string"};
 }
-void print_to_string(std::string& output, char value, const format_data& data) {
+inline void print_to_string(std::string& output, char value, const format_data& data) {
 	if(data.specifier == 's') {
 		output.push_back(value);
 	}
@@ -326,7 +326,7 @@ void print_to_string(std::string& output, T const* value, const format_data& dat
 	}
 }
 template<>
-void print_to_string(std::string& output, char const* value, const format_data& data) {
+inline void print_to_string(std::string& output, char const* value, const format_data& data) {
 	static const format_data format{'s', '0', 0, 2*sizeof(size_t), 0, 16};
 	if(data.specifier == 's') {
 		output.append(value);
