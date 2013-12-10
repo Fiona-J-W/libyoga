@@ -13,6 +13,7 @@ int main() {
 	file.writef("some call to writef with parameter %s - ", 3);
 	file.writefln("some call to writefln with parameter %s", 42);
 	
+	DEBUG("just a test with an arg: %s", 1337);
 	
 	//std::cout << dlo2::format(
 	//		"let's print something: %s, %s. and a std::string: %s, and ints: %s, uint: %s\n",

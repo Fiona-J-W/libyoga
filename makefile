@@ -7,7 +7,7 @@
 
 
 CC =  clang++
-CFLAGS =  -Wall -Wextra -pedantic -O3 -std=c++11 -DDLO2_USE_POSIX -O3 -Werror -Wextra -pedantic -std=c++11 -mtune=native -march=native 
+CFLAGS =  -Wall -Wextra -pedantic -O3 -std=c++11 -DDLO2_USE_POSIX -O3 -Werror -Wextra -pedantic -std=c++11 -mtune=native -march=native -DDLO2_USE_DEBUGGING_UTILITIES 
 CLIBS = 
 INCLUDES = 
 TARGET = bin/test

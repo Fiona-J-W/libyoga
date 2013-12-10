@@ -4,11 +4,13 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <climits>
 #include <cctype>
 #include <cstddef>
 #include <cstdio>
 #include <iostream>
+#include <mutex>
 #include <stdexcept>
 #include <system_error>
 #include <string>
@@ -27,7 +29,7 @@ namespace dlo2 {
  * Create a string from a function-template, that behaves like a sane and typesafe sprintf.
  *
  * To get format-support for your class simply create a function in it's namespace:
- * void print_to_string(std::string& output, YOURCLASS arg, const format_data& formatting)
+ * void print_to_string(std::string& output, YOURCLASS arg, const dlo2::impl::format_data& formatting)
  */
 template<typename...T>
 std::string format(const std::string& format, const T&...args);
@@ -137,12 +139,31 @@ public:
 
 #endif
 
+#ifdef DLO2_USE_DEBUGGING_UTILITIES
+
+inline void set_debug_level(int level);
+
+#ifdef DLO2_DEBUG
+
+#define DEBUG(...) ::dlo2::impl::debug(__FILE__, __LINE__, __func__, 0, __VA_ARGS__)
+#define DEBUGL(...) ::dlo2::impl::debug(__FILE__, __LINE__, __func__, __VA_ARGS__)
+
+#else
+
+#define DEBUG(...)   do{}while(false)
+#define DEBUGL(...)   do{}while(false)
+
+#endif
+#endif
+
 ////////////////////////////////////////////////////////////////////////
 //                   Implementation starts here                       //
 ////////////////////////////////////////////////////////////////////////
 
 
 namespace impl {
+
+inline void write_to_stdout(const std::string& str);
 
 template<typename InputIterator>
 size_t c_it_pair_to_uint(InputIterator& it, InputIterator end) {
@@ -374,6 +395,39 @@ void format(const std::string& formatstring, std::string& output, const Args&...
 	impl::format_impl(formatstring, output, printers);
 }
 
+inline std::atomic_int& get_debug_level() {
+	static std::atomic_int level{10};
+	return level;
+}
+
+template<typename...T>
+void debug(const char * const file, int line, const char * const func, int level,
+		const std::string& formatstring, const T&...args) {
+	if(level <= get_debug_level().load()) {
+		std::string outstr;
+#ifdef DLO2_USE_POSIX
+		format("DEBUG(%s) ['%s', #%s, '%s', pid %s]: ", outstr, level, file, line,
+				func, getpid());
+#else
+		format("DEBUG(%s) ['%s', #%s, '%s']: ", outstr, level, file, line, func);
+#endif
+		format(formatstring, outstr, args...);
+		outstr += '\n';
+		write_to_stdout(outstr);
+	}
+}
+
+inline void write_to_stdout(const std::string& str) {
+	static std::mutex m;
+	std::lock_guard<std::mutex> g{m};
+#ifdef DLO2_USE_POSIX
+	write(1, static_cast<const void*>(str.c_str()), str.size());
+#else
+	// Don't use this if you don't have too:
+	std::cout << str << std::flush;
+#endif
+}
+
 } // namespace impl
 
 template<typename...T>
@@ -389,12 +443,7 @@ void writef(const std::string& formatstring, const T&...args) {
 	thread_local static std::string buffer;
 	buffer.clear();
 	impl::format(formatstring, buffer, args...);
-#ifdef DLO2_USE_POSIX
-	write(1, static_cast<const void*>(buffer.c_str()), buffer.size());
-#else
-	// Don't use this if you don't have too:
-	std::cout << buffer << std::flush;
-#endif
+	impl::write_to_stdout(buffer);
 }
 
 template<typename...T>
@@ -402,6 +451,9 @@ void writefln(std::string format, const T&...args) {
 	writef(format+'\n', args...);
 }
 
+inline void set_debug_level(int level) {
+	impl::get_debug_level().store(level);
+}
 
 } // namespace dlo2
 
