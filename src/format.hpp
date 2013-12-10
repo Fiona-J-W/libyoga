@@ -8,6 +8,7 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdio>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -284,7 +285,8 @@ void writef(const std::string& formatstring, const T&...args) {
 #ifdef DLO2_USE_POSIX
 	write(1, static_cast<const void*>(buffer.c_str()), buffer.size());
 #else
-	fputs(buffer.c_str(), stdout);
+		// Don't use this if you don't have to:
+	std::cout << buffer << std::flush;
 #endif
 }
 
