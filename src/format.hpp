@@ -106,8 +106,11 @@ public:
 	
 	bool open(const char * const filename, int flags = DEFAULT_FLAGS, mode_t mode = DEFAULT_MODE) {
 		close();
-		fd = ::open(filename, flags, mode);
-		return fd != -1;
+		if(filename) {
+			fd = ::open(filename, flags, mode);
+			return fd != -1;
+		}
+		else return true;
 	}
 	bool open(const std::string& filename, int flags = DEFAULT_FLAGS, mode_t mode = DEFAULT_MODE) {
 		return open(filename.c_str(), flags, mode);
