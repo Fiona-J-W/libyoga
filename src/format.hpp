@@ -78,9 +78,14 @@ public:
 	
 	ofile() = default;
 	ofile(const ofile&) = delete;
-	ofile(ofile&&) = default;
 	ofile& operator=(const ofile&) = delete;
-	ofile& operator=(ofile&&) = default;
+	ofile(ofile&& other) {
+		std::swap(fd, other.fd);
+	}
+	ofile& operator=(ofile&& other) {
+		std::swap(fd, other.fd);
+		return *this;
+	}
 	
 	explicit ofile(const char * const filename, int flags = DEFAULT_FLAGS,
 			mode_t mode = DEFAULT_MODE) {
