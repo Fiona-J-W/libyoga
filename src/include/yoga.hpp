@@ -223,20 +223,27 @@ struct format_data {
 		bool increment_default_index = true;
 		while(str_begin != str_end) {
 			switch(*str_begin) {
-				case '_':
+				case '_': // base
+					base = c_it_pair_to_uint(++str_begin, str_end);
+					break;
+				case '@': // pos
+					index = c_it_pair_to_uint(++str_begin, str_end);
+					increment_default_index = false;
+					break;
+				case '*': // fill
 					++str_begin != str_end ? fill = *str_begin :
 						throw std::invalid_argument{"invalid formatstring"};
 					++str_begin;
 					break;
-				case '-':
+				case '~': // width1
 					width1 = c_it_pair_to_uint(++str_begin, str_end);
 					break;
-				case '.':
+				case '.': // width2
 					width2 = c_it_pair_to_uint(++str_begin, str_end);
 					break;
-				
 				default:
-					throw std::invalid_argument{"invalid formatstring"};
+					throw std::invalid_argument{
+						"invalid formatstring: unknown identifier"};
 			}
 		}
 		if(increment_default_index) {
@@ -249,7 +256,7 @@ struct format_data {
 	char fill = ' ';
 	size_t index;
 	size_t width1 = 0;
-	size_t width2 = 0;
+	size_t width2 = 10;
 	size_t base = 10;
 };
 

@@ -8,7 +8,7 @@ int main() {
 	
 	int tmp = 3;
 	yoga::writefln("char*: %s, char* as ptr: 0x%p, int*: 0x%p", "foo", "bar", &tmp);
-	yoga::writefln("uintptr_t: %_0-16s, casted ptr: %_0-16s", uintptr_t{345}, uintptr_t("foobar"));
+	yoga::writefln("uintptr_t: %*0~16_16s, casted ptr: %*0~16_16s", uintptr_t{345}, uintptr_t("foobar"));
 	
 	//yoga::ofile file{"test.txt"};
 	//file.writef("some call to writef with parameter %s - ", 3);
