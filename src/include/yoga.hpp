@@ -33,6 +33,7 @@
 #include <system_error>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #ifdef YOGA_BE_AWESOME
 #	ifndef YOGA_USE_POSIX
@@ -398,6 +399,15 @@ inline void print_to_string(std::string& output, char const* value, const format
 	}
 }
 
+template<typename T1, typename T2>
+inline void print_to_string(std::string& output, const std::pair<T1, T2>& value, const format_data& data) {
+	output.push_back('(');
+	print_to_string(output, value.first, data);
+	output.append(", ");
+	print_to_string(output, value.second, data);
+	output.push_back(')');
+}
+
 template<typename Container, class RequireBegin= typename std::enable_if<
 	std::is_base_of< std::bidirectional_iterator_tag,
 		typename std::iterator_traits<decltype(std::declval<Container>().begin())>::iterator_category>{}
@@ -411,7 +421,7 @@ template<typename Container, class RequireBegin= typename std::enable_if<
 	class Dummy1= void,
 	class Dummy2= void
 >
-inline void print_to_string(std::string& output, const Container value, const format_data& data) {
+inline void print_to_string(std::string& output, const Container& value, const format_data& data) {
 	if(data.specifier != 's') {
 		throw std::invalid_argument{""};
 	}
