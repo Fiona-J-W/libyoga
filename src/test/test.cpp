@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <vector>
 #include <map>
+#include <tuple>
 
 #include "../include/yoga.hpp"
 
@@ -30,6 +31,8 @@ int main() {
 	yoga::writefln("print some vector: %s", std::vector<std::vector<int>>{{1,2},{3,4}});
 	
 	yoga::writefln("print some map: %s", std::map<std::string, int>{{"foo", 1},{"bar", 2},{"baz", 3}});
+	
+	yoga::writefln("print a tuple: %s", std::make_tuple(3, "foo", std::vector<int>{3,4,5}));
 	//std::cout << yoga::format(
 	//		"let's print something: %s, %s. and a std::string: %s, and ints: %s, uint: %s\n",
 	//		"foobar",'c', std::string{"some string"}, 42, 1337u);

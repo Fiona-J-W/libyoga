@@ -32,6 +32,7 @@
 #include <stdexcept>
 #include <system_error>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -342,6 +343,8 @@ template<typename Iterator, class = typename std::enable_if<
 inline void print_to_string(std::string& output, const std::pair<Iterator, Iterator>& value,
 		const format_data& data);
 
+template<typename...T>
+inline void print_to_string(std::string& output, const std::tuple<T...>& value, const format_data& data);
 
 // definitions:
 
@@ -493,7 +496,24 @@ inline void print_to_string(std::string& output, const std::pair<Iterator, Itera
 	print_to_string(output, range_helper{value.first, value.second}, data);
 }
 
-
+template<size_t N, size_t I, typename...T> struct tuple_printer {
+	static void print(std::string& output, const std::tuple<T...>& value, const format_data& data) {
+		print_to_string(output, std::get<I-1>(value), data);
+		output.append(", ");
+		tuple_printer<N, I+1, T...>::print(output, value, data);
+	}
+};
+template<size_t N, typename...T> struct tuple_printer<N, N, T...> {
+	static void print(std::string& output, const std::tuple<T...>& value, const format_data& data) {
+		print_to_string(output, std::get<N-1>(value), data);
+	}
+};
+template<typename...T>
+inline void print_to_string(std::string& output, const std::tuple<T...>& value, const format_data& data) {
+	output.push_back('(');
+	tuple_printer<sizeof...(T), 1, T...>::print(output, value, data);
+	output.push_back(')');
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                   print_to_string-family end                                   //
