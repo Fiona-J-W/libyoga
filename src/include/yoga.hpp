@@ -453,8 +453,9 @@ void debug(const char * const file, int line, const char * const func, int level
 	if(level <= get_debug_level().load()) {
 		std::string outstr;
 #ifdef YOGA_USE_POSIX
+		thread_local static const int pid = getpid();
 		format("DEBUG(%s) ['%s', #%s, '%s', pid %s]: ", outstr, level, file, line,
-				func, getpid());
+				func, pid);
 #else
 		format("DEBUG(%s) ['%s', #%s, '%s']: ", outstr, level, file, line, func);
 #endif
