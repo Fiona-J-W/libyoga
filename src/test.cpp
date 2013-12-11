@@ -10,9 +10,9 @@ int main() {
 	yoga::writefln("char*: %s, char* as ptr: 0x%p, int*: 0x%p", "foo", "bar", &tmp);
 	yoga::writefln("uintptr_t: %_0-16s, casted ptr: %_0-16s", uintptr_t{345}, uintptr_t("foobar"));
 	
-	yoga::ofile file{"test.txt"};
-	file.writef("some call to writef with parameter %s - ", 3);
-	file.writefln("some call to writefln with parameter %s", 42);
+	//yoga::ofile file{"test.txt"};
+	//file.writef("some call to writef with parameter %s - ", 3);
+	//file.writefln("some call to writefln with parameter %s", 42);
 	
 	DEBUG("just a test with an arg: %s", 1337);
 	
