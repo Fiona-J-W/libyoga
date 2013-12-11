@@ -295,6 +295,56 @@ public:
 	}
 };
 
+template<typename T, typename MinIterator> struct is_min_iterator : std::conditional<
+	std::is_base_of< MinIterator,
+		typename std::iterator_traits<T>::iterator_category>{}
+	|| std::is_same< MinIterator,
+		typename std::iterator_traits<T>::iterator_category>{},
+	std::true_type, std::false_type>::type {};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                   print_to_string-family                                       //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// declarations:
+
+inline void print_to_string(std::string& output, const std::string& value, const format_data& data);
+
+inline void print_to_string(std::string& output, char value, const format_data& data);
+
+template<size_t N>
+void print_to_string(std::string& output, char value[N], const format_data& data);
+
+template<typename T, class = typename std::enable_if<std::is_integral<T>{}>::type,
+		class = typename std::enable_if<std::numeric_limits<T>::is_signed>::type>
+void print_to_string(std::string& output, T value, const format_data& data);
+
+template<typename T, class = typename std::enable_if<std::is_integral<T>{}>::type,
+		class = typename std::enable_if<!std::numeric_limits<T>::is_signed>::type,
+		class = void>
+void print_to_string(std::string& output, T value, const format_data& data);
+
+template<typename T>
+void print_to_string(std::string& output, T const* value, const format_data& data);
+
+template<>
+inline void print_to_string(std::string& output, char const* value, const format_data& data);
+
+template<typename T1, typename T2>
+inline void print_to_string(std::string& output, const std::pair<T1, T2>& value, const format_data& data);
+
+template<typename Container, class RequireIterator = typename std::enable_if<
+	is_min_iterator<typename Container::iterator, std::bidirectional_iterator_tag>{}>::type>
+inline void print_to_string(std::string& output, const Container& value, const format_data& data);
+
+template<typename Iterator, class = typename std::enable_if<
+	is_min_iterator<Iterator, std::bidirectional_iterator_tag>{}>::type>
+inline void print_to_string(std::string& output, const std::pair<Iterator, Iterator>& value,
+		const format_data& data);
+
+
+// definitions:
+
 inline void print_to_string(std::string& output, const std::string& value, const format_data& data) {
 	if(data.specifier == 's') {
 		output.append(value);
@@ -316,8 +366,8 @@ void print_to_string(std::string& output, char value[N], const format_data& data
 	else throw std::invalid_argument{"invlid format-specifier for std::string"};
 }
 
-template<typename T, class = typename std::enable_if<std::is_integral<T>{}>::type,
-		class = typename std::enable_if<std::numeric_limits<T>::is_signed>::type>
+// signed integer
+template<typename T, class, class>
 void print_to_string(std::string& output, T value, const format_data& data) {
 	std::vector<char> buffer(std::max(sizeof(T)*CHAR_BIT + 2, data.width1 + 1), data.fill);
 	auto it = buffer.end();
@@ -347,10 +397,8 @@ void print_to_string(std::string& output, T value, const format_data& data) {
 	output.append(it, buffer.end());
 }
 
-
-template<typename T, class = typename std::enable_if<std::is_integral<T>{}>::type,
-		class = typename std::enable_if<!std::numeric_limits<T>::is_signed>::type,
-		class = void>
+// unsigned integer
+template<typename T, class, class, class>
 void print_to_string(std::string& output, T value, const format_data& data) {
 	std::vector<char> buffer(std::max(sizeof(T)*CHAR_BIT + 2, data.width1 + 1), data.fill);
 	auto it = buffer.end();
@@ -408,19 +456,7 @@ inline void print_to_string(std::string& output, const std::pair<T1, T2>& value,
 	output.push_back(')');
 }
 
-template<typename Container, class RequireBegin= typename std::enable_if<
-	std::is_base_of< std::bidirectional_iterator_tag,
-		typename std::iterator_traits<decltype(std::declval<Container>().begin())>::iterator_category>{}
-	|| std::is_same< std::bidirectional_iterator_tag,
-		typename std::iterator_traits<decltype(std::declval<Container>().begin())>::iterator_category>{}
-	>::type,
-	class RequireEnd= typename std::enable_if<
-		std::is_same<decltype(std::declval<Container>().begin()),
-			decltype(std::declval<Container>().end())
-		>{}>::type,
-	class Dummy1= void,
-	class Dummy2= void
->
+template<typename Container, class RequireIterator>
 inline void print_to_string(std::string& output, const Container& value, const format_data& data) {
 	if(data.specifier != 's') {
 		throw std::invalid_argument{""};
@@ -441,6 +477,27 @@ inline void print_to_string(std::string& output, const Container& value, const f
 	print_to_string(output, *end, data);
 	output.push_back(']');
 }
+
+
+template<typename Iterator, class>
+inline void print_to_string(std::string& output, const std::pair<Iterator, Iterator>& value,
+		const format_data& data) {
+	
+	struct range_helper {
+		Iterator b;
+		Iterator e;
+		
+		Iterator begin() const { return b; }
+		Iterator end() const { return e; }
+	};
+	print_to_string(output, range_helper{value.first, value.second}, data);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                   print_to_string-family end                                   //
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<size_t Index = 0, size_t ArraySize, typename Arg, typename...Args>
 void prepare_printers(printer_list<ArraySize>& array,
