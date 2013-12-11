@@ -1,7 +1,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "yoga.hpp"
+#include "../include/yoga.hpp"
 
 
 int main() {
