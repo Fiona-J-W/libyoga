@@ -27,6 +27,7 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdio>
+#include <iterator>
 #include <mutex>
 #include <stdexcept>
 #include <system_error>
@@ -397,6 +398,39 @@ inline void print_to_string(std::string& output, char const* value, const format
 	}
 }
 
+template<typename Container, class RequireBegin= typename std::enable_if<
+	std::is_base_of< std::bidirectional_iterator_tag,
+		typename std::iterator_traits<decltype(std::declval<Container>().begin())>::iterator_category>{}
+	|| std::is_same< std::bidirectional_iterator_tag,
+		typename std::iterator_traits<decltype(std::declval<Container>().begin())>::iterator_category>{}
+	>::type,
+	class RequireEnd= typename std::enable_if<
+		std::is_same<decltype(std::declval<Container>().begin()),
+			decltype(std::declval<Container>().end())
+		>{}>::type,
+	class Dummy1= void,
+	class Dummy2= void
+>
+inline void print_to_string(std::string& output, const Container value, const format_data& data) {
+	if(data.specifier != 's') {
+		throw std::invalid_argument{""};
+	}
+	auto it = value.begin();
+	auto end = value.end();
+	if(it == end) {
+		output.append("[]");
+		return;
+	}
+	--end;
+	output.push_back('[');
+	while(it != end) {
+		print_to_string(output, *it, data);
+		output.append(", ");
+		++it;
+	}
+	print_to_string(output, *end, data);
+	output.push_back(']');
+}
 
 template<size_t Index = 0, size_t ArraySize, typename Arg, typename...Args>
 void prepare_printers(printer_list<ArraySize>& array,

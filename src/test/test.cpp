@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include <iomanip>
+#include <vector>
 
 #include "../include/yoga.hpp"
 
@@ -24,6 +25,8 @@ int main() {
 		int8_t{2}) == "char: c, unsigned char: 1, signed char: 2");
 	
 	yoga::writefln("just some text without arguments");
+	
+	yoga::writefln("print some vector: %s", std::vector<std::vector<int>>{{1,2},{3,4}});
 	
 	//std::cout << yoga::format(
 	//		"let's print something: %s, %s. and a std::string: %s, and ints: %s, uint: %s\n",
