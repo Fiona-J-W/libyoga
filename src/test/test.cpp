@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <vector>
 #include <map>
-#include <tuple>
+#include <forward_list>
 
 #include "../include/yoga.hpp"
 
@@ -37,4 +37,6 @@ int main() {
 	yoga::writefln("true s: %s, false s: %s, true d: %d, false d: %d", true, false, true, false);
 	
 	yoga::writefln("float: %s, double: %s, long double: %s", 3.141f, 3.141592654, 2.718281828L);
+	
+	yoga::writefln("forward-range: %s", std::forward_list<int>{1,2,3,4,5});
 }

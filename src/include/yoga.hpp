@@ -344,6 +344,11 @@ template<typename Container, class RequireIterator = typename std::enable_if<
 	is_min_iterator<typename Container::iterator, std::bidirectional_iterator_tag>{}>::type>
 inline void print_to_string(std::string& output, const Container& value, const format_data& data);
 
+// forward range
+template<typename Container, class RequireIterator = typename std::enable_if<std::is_same<
+	typename std::iterator_traits<typename Container::iterator>::iterator_category, std::forward_iterator_tag>{}>::type, class Dummy = void>
+inline void print_to_string(std::string& output, const Container& value, const format_data& data);
+
 template<typename Iterator, class = typename std::enable_if<
 	is_min_iterator<Iterator, std::bidirectional_iterator_tag>{}>::type>
 inline void print_to_string(std::string& output, const std::pair<Iterator, Iterator>& value,
@@ -474,6 +479,7 @@ inline void print_to_string(std::string& output, const std::pair<T1, T2>& value,
 	output.push_back(')');
 }
 
+// bidirectional range
 template<typename Container, class RequireIterator>
 inline void print_to_string(std::string& output, const Container& value, const format_data& data) {
 	if(data.specifier != 's') {
@@ -496,6 +502,29 @@ inline void print_to_string(std::string& output, const Container& value, const f
 	output.push_back(']');
 }
 
+// forward range
+template<typename Container, class RequireIterator, class Dummy>
+inline void print_to_string(std::string& output, const Container& value, const format_data& data) {
+	if(data.specifier != 's') {
+		throw std::invalid_argument{""};
+	}
+	auto it1 = value.begin();
+	auto end = value.end();
+	if(it1 == end) {
+		output.append("[]");
+		return;
+	}
+	auto it2 = it1++;
+	output.push_back('[');
+	while(it1 != end) {
+		print_to_string(output, *it2, data);
+		output.append(", ");
+		it2 = it1;
+		++it1;
+	}
+	print_to_string(output, *it2, data);
+	output.push_back(']');
+}
 
 template<typename Iterator, class>
 inline void print_to_string(std::string& output, const std::pair<Iterator, Iterator>& value,
