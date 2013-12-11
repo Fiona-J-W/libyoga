@@ -1,21 +1,22 @@
 #include <iostream>
 #include <iomanip>
-#include "format.hpp"
+
+#include "yoga.hpp"
 
 
 int main() {
 	
 	int tmp = 3;
-	dlo2::writefln("char*: %s, char* as ptr: 0x%p, int*: 0x%p", "foo", "bar", &tmp);
-	dlo2::writefln("uintptr_t: %_0-16s, casted ptr: %_0-16s", uintptr_t{345}, uintptr_t("foobar"));
+	yoga::writefln("char*: %s, char* as ptr: 0x%p, int*: 0x%p", "foo", "bar", &tmp);
+	yoga::writefln("uintptr_t: %_0-16s, casted ptr: %_0-16s", uintptr_t{345}, uintptr_t("foobar"));
 	
-	dlo2::ofile file{"test.txt"};
+	yoga::ofile file{"test.txt"};
 	file.writef("some call to writef with parameter %s - ", 3);
 	file.writefln("some call to writefln with parameter %s", 42);
 	
 	DEBUG("just a test with an arg: %s", 1337);
 	
-	//std::cout << dlo2::format(
+	//std::cout << yoga::format(
 	//		"let's print something: %s, %s. and a std::string: %s, and ints: %s, uint: %s\n",
 	//		"foobar",'c', std::string{"some string"}, 42, 1337u);
 	/*
@@ -33,7 +34,7 @@ int main() {
 	}
 	else if(argv[1][0] == 'w'){
 		for(int i = 0; i < 100000000; ++i) {
-			dlo2::writef("i is %-6s\n", i);
+			yoga::writef("i is %-6s\n", i);
 		}
 	}
 	else if(argv[1][0] == 'P') {
@@ -51,7 +52,7 @@ int main() {
 	else if(argv[1][0] == 'W'){
 		auto str = "foobarbazblablub";
 		for(int i = 0; i < 10000000; ++i) {
-			dlo2::writef("i is %-6s, str='%s'\n", i, str);
+			yoga::writef("i is %-6s, str='%s'\n", i, str);
 		}
 	}
 	else return 2;
