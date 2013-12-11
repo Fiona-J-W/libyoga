@@ -45,17 +45,23 @@ The library provides a function-template yoga::format(format, ...) that creates 
 the provided formatstring and the further arguments (somwhat like sprintf). All supported types can be
 printed with the identifier %s:
 
-`yoga::format("foo%sbar%sbaz%%", 1, "bla") == "foo1barblabaz%"`
+```c++
+yoga::format("foo%sbar%sbaz%%", 1, "bla") == "foo1barblabaz%"
+```
 
 Some types, for instance char\*, also provide other identifiers which will print them in other ways:
 
-`yoga::format("char* as str: %s, char* as pointer: %p", "foo", "bar")
-== "char* as str: foo, char* as pointer: 000000000000fe25"`
+```c++
+yoga::format("char* as str: %s, char* as pointer: %p", "foo", "bar")
+	== "char* as str: foo, char* as pointer: 000000000000fe25"
+```
 
 Sometimes one want's to change the way something is printed only to a small degree. This is what
 format-arguments are for:
 
-`yoga::format("11 in hex: %_16*0~2s', 11) == "0b"`
+```c++
+yoga::format("11 in hex: %_16*0~2s', 11) == "0b"
+```
 
 As you see it is possible to combine them too. Every format-argument is identified by a special
 character followed by one or more characters that set it's value. Since letters are used to end the
@@ -79,8 +85,8 @@ The functionality is probaly best shown by some examples:
 using yoga::format;
 format("%s, %@0p, %s", "foo", 3) == "foo, 000000000000fe25, 3";
 format("a string with no args") == "a string with no args";
-format("char: %s, unsigned char: %s, signed char: %s", 'c', unsigned int{1}, signed int{2})
-	== "char: c, unsigned char: 1, signed char: 2";
+format("char: %s, unsigned char: %s, signed char: %s", 'c', unsigned int{1},
+	signed int{2}) == "char: c, unsigned char: 1, signed char: 2";
 ```
 
 Target
