@@ -35,7 +35,7 @@ all: $(TARGET)
 #Dependencies:
 
 
-build/dummy.o: src/dummy.cpp src/yoga.hpp 
+build/dummy.o: src/test/dummy.cpp src/include/yoga.hpp 
 
-build/test.o: src/test.cpp src/yoga.hpp 
+build/test.o: src/test/test.cpp src/include/yoga.hpp 
 
