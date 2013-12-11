@@ -2,7 +2,7 @@
 #define YOGA_INCLUDE_GUARD_YOGA_HPP
 
 /*
- *  libdlo - A modern output-library for C++
+ *  libyoga - A modern output-library for C++
  *  Copyright (C) 2013 Florian Weber <florian.weber at sfz-bw.de>
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -49,7 +49,7 @@ namespace yoga {
  *
  * To get format-support for your class simply create a function in it's namespace:
  * void print_to_string(std::string& output, YOURCLASS arg, const yoga::impl::format_data& formatting)
- */
+**/
 template<typename...T>
 std::string format(const std::string& format, const T&...args);
 
