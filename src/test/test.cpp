@@ -15,6 +15,7 @@ int main() {
 	//file.writefln("some call to writefln with parameter %s", 42);
 	
 	DEBUG("just a test with an arg: %s", 1337);
+	DEBUGL(1, "");
 	
 	yoga::writefln("just some text without arguments");
 	
