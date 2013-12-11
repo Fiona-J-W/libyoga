@@ -27,7 +27,6 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdio>
-#include <iostream>
 #include <mutex>
 #include <stdexcept>
 #include <system_error>
@@ -35,10 +34,12 @@
 #include <type_traits>
 
 #ifdef YOGA_USE_POSIX
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#	include <unistd.h>
+#	include <sys/types.h>
+#	include <sys/stat.h>
+#	include <fcntl.h>
+#else
+#	include <iostream>
 #endif
 
 namespace yoga {
