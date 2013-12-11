@@ -16,6 +16,8 @@ int main() {
 	
 	DEBUG("just a test with an arg: %s", 1337);
 	
+	yoga::writefln("just some text without arguments");
+	
 	//std::cout << yoga::format(
 	//		"let's print something: %s, %s. and a std::string: %s, and ints: %s, uint: %s\n",
 	//		"foobar",'c', std::string{"some string"}, 42, 1337u);

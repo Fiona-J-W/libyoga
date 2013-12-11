@@ -409,6 +409,31 @@ void format_impl(const std::string& formatstring, std::string& output,
 	}
 }
 
+template<>
+inline void format_impl(const std::string& formatstring, std::string& output,
+		const printer_list<0>&) {
+	auto it1 = formatstring.begin();
+	auto it2 = it1;
+	auto end = formatstring.end();
+	while(it1 != end) {
+		it2 = std::find(it1, end, '%');
+		if(it1 != it2) {
+			output.append(it1, it2);
+		}
+		if(it2 == end) {
+			break;
+		}
+		++it2;
+		if(it2 == end || *it2 != '%') {
+			throw std::invalid_argument{"invalid formatstring"};
+		}
+		else {
+			output.push_back('%');
+			it1 = it2;
+		}
+	}
+}
+
 
 template<typename...Args>
 void format(const std::string& formatstring, std::string& output, const Args&...args) {

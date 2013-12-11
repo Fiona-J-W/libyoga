@@ -7,7 +7,7 @@
 
 
 CC =  clang++
-CFLAGS =  -Wall -Wextra -pedantic -std=c++11  -DYOGA_USE_POSIX -DYOGA_USE_DEBUGGING_UTILITIES -DYOGA_DEBUG 
+CFLAGS =  -Wall -Wextra -pedantic -std=c++11  -DYOGA_USE_POSIX -DYOGA_USE_DEBUGGING_UTILITIES -DYOGA_DEBUG -O0 -std=c++11 -D_GLIBCXX_DEBUG -g 
 CLIBS = 
 INCLUDES = 
 TARGET = bin/test
