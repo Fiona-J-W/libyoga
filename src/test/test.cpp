@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <iomanip>
 
@@ -16,6 +17,11 @@ int main() {
 	
 	DEBUG("just a test with an arg: %s", 1337);
 	DEBUGL(1, "");
+	
+	yoga::format("%s, %@0p, %s", "foo", 3);
+	assert(yoga::format("a string with no args") == "a string with no args");
+	assert(yoga::format("char: %s, unsigned char: %s, signed char: %s", 'c', uint8_t{1},
+		int8_t{2}) == "char: c, unsigned char: 1, signed char: 2");
 	
 	yoga::writefln("just some text without arguments");
 	
