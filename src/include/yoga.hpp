@@ -515,6 +515,18 @@ inline void print_to_string(std::string& output, const std::tuple<T...>& value, 
 	output.push_back(')');
 }
 
+inline void print_to_string(std::string& output, bool value, const format_data& data) {
+	switch(data.specifier) {
+		case 's':
+			output.append(value ? "true" : "false");
+			break;
+		case 'd':
+			output.push_back('0' + value);
+			break;
+		default:
+			throw std::invalid_argument{"invalid specifier for bool"};
+	}
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                   print_to_string-family end                                   //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
