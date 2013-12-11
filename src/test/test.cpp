@@ -35,6 +35,8 @@ int main() {
 	yoga::writefln("print a tuple: %s", std::make_tuple(3, "foo", std::vector<int>{3,4,5}));
 	
 	yoga::writefln("true s: %s, false s: %s, true d: %d, false d: %d", true, false, true, false);
+	
+	yoga::writefln("float: %s, double: %s, long double: %s", 3.141f, 3.141592654, 2.718281828L);
 	//std::cout << yoga::format(
 	//		"let's print something: %s, %s. and a std::string: %s, and ints: %s, uint: %s\n",
 	//		"foobar",'c', std::string{"some string"}, 42, 1337u);

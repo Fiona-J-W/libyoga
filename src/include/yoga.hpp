@@ -316,10 +316,16 @@ inline void print_to_string(std::string& output, char value, const format_data& 
 template<size_t N>
 void print_to_string(std::string& output, char value[N], const format_data& data);
 
+// floating point
+template<typename T, class = typename std::enable_if<std::is_floating_point<T>{}>::type>
+void print_to_string(std::string& output, T value, const format_data&);
+
+// signed integer
 template<typename T, class = typename std::enable_if<std::is_integral<T>{}>::type,
 		class = typename std::enable_if<std::numeric_limits<T>::is_signed>::type>
 void print_to_string(std::string& output, T value, const format_data& data);
 
+//unsigned integer
 template<typename T, class = typename std::enable_if<std::is_integral<T>{}>::type,
 		class = typename std::enable_if<!std::numeric_limits<T>::is_signed>::type,
 		class = void>
@@ -367,6 +373,15 @@ void print_to_string(std::string& output, char value[N], const format_data& data
 		output.append(value, value+N);
 	}
 	else throw std::invalid_argument{"invlid format-specifier for std::string"};
+}
+
+// floating-point
+template<typename T, class>
+void print_to_string(std::string& output, T value, const format_data& data) {
+	if(data.specifier != 's') {
+		throw std::invalid_argument{"invalid specifier for floating-point-number"};
+	}
+	output.append(std::to_string(value));
 }
 
 // signed integer
