@@ -60,7 +60,7 @@ Sometimes one want's to change the way something is printed only to a small degr
 format-arguments are for:
 
 ```c++
-yoga::format("11 in hex: %_16*0~2s', 11) == "0b"
+yoga::format("11 in hex: %_16*0~2s", 11) == "0b"
 ```
 
 As you see it is possible to combine them too. Every format-argument is identified by a special
