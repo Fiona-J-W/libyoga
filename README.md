@@ -20,7 +20,7 @@ The printf-family is extremly dangerous and stupid:
 While streams solve these problems they create several themselves:
 * Formatting output with streams is extremely verbose. To print an uint64\_t with 16 characters
 	(leading zeros) in hex, one has to write this:
-	´stream << std::setw(16) << std::setfill('0') << std::hex << uint64_t{2};´
+	`stream << std::setw(16) << std::setfill('0') << std::hex << uint64_t{2};`
 * Some of these manipulaters keep persistent until they get explicitaly reset. Others will be reset
 	after the next call. This is almost as inconsistent as php.
 * Since formating can change the way how stuff will be printed forever, streams may either get messed
