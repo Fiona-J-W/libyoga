@@ -33,6 +33,19 @@
 #include <string>
 #include <type_traits>
 
+#ifdef YOGA_BE_AWESOME
+#	ifndef YOGA_USE_POSIX
+#		define YOGA_USE_POSIX
+#	endif
+#	ifndef YOGA_USE_DEBUGGING_UTILITIES
+#		define YOGA_USE_DEBUGGING_UTILITIES
+#	endif
+#	ifndef YOGA_USE_PRETTY_FUNC
+#		define YOGA_USE_PRETTY_FUNC
+#	endif
+#endif
+
+
 #ifdef YOGA_USE_POSIX
 #	include <unistd.h>
 #	include <sys/types.h>
