@@ -85,8 +85,8 @@ The functionality is probaly best shown by some examples:
 using yoga::format;
 format("%s, %@0p, %s", "foo", 3) == "foo, 000000000000fe25, 3";
 format("a string with no args") == "a string with no args";
-format("char: %s, unsigned char: %s, signed char: %s", 'c', unsigned int{1},
-	signed int{2}) == "char: c, unsigned char: 1, signed char: 2";
+format("char: %s, unsigned char: %s, signed char: %s", 'c', uint8_t{1},
+	int8_t{2}) == "char: c, unsigned char: 1, signed char: 2";
 ```
 
 Target
