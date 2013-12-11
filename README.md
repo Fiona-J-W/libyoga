@@ -14,7 +14,7 @@ The printf-family is extremly dangerous and stupid:
 	the format-string.
 * Writing portable code with typedefed integer-types get's ridicolous. The correct solution is to
 	include inttypes.h which provides macros for the right types. this results in calls like
-	this: ´printf("foo%" PRI64 "bar, uint64_t{0});´
+	this: `printf("foo%" PRI64 "bar, uint64_t{0});`
 
 
 While streams solve these problems they create several themselves:
@@ -26,7 +26,7 @@ While streams solve these problems they create several themselves:
 * Since formating can change the way how stuff will be printed forever, streams may either get messed
 	up or have to be cleaned manually. This means that the solution in the first point is actually
 	incomplete. The real ssolution would be this:
-	´stream << std::setw(16) << std::setfill('0') << std::hex << uint64_t{2} << std::setw(0) << std::dec;´
+	`stream << std::setw(16) << std::setfill('0') << std::hex << uint64_t{2} << std::setw(0) << std::dec;`
 
 Since this situation is clearly less then great, libyoga was invented to get rid of all of these
 disadvantages and create few new ones.
