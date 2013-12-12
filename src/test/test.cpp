@@ -15,7 +15,7 @@ namespace test {
 		std::string baz;
 	};
 	
-	void print_to_string(std::string& output, const foo& value, const ::yoga::impl::format_data& data) {
+	void print_to_string(std::string& output, const foo& value, const ::yoga::x::format_data& data) {
 		output.append("foo");
 		print_to_string(output, std::tie(value.bar, value.baz), data);
 	}

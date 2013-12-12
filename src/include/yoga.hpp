@@ -230,6 +230,9 @@ size_t c_it_pair_to_uint(InputIterator& it, InputIterator end) {
 	return returnval;
 }
 
+} // namespace impl
+namespace x {
+
 struct format_data {
 	format_data(std::string::const_iterator str_begin, std::string::const_iterator str_end,
 			size_t& default_index) :index{default_index} {
@@ -238,10 +241,10 @@ struct format_data {
 		while(str_begin != str_end) {
 			switch(*str_begin) {
 				case '_': // base
-					base = c_it_pair_to_uint(++str_begin, str_end);
+					base = impl::c_it_pair_to_uint(++str_begin, str_end);
 					break;
 				case '@': // pos
-					index = c_it_pair_to_uint(++str_begin, str_end);
+					index = impl::c_it_pair_to_uint(++str_begin, str_end);
 					increment_default_index = false;
 					break;
 				case '*': // fill
@@ -250,10 +253,10 @@ struct format_data {
 					++str_begin;
 					break;
 				case '~': // width1
-					width1 = c_it_pair_to_uint(++str_begin, str_end);
+					width1 = impl::c_it_pair_to_uint(++str_begin, str_end);
 					break;
 				case '.': // width2
-					width2 = c_it_pair_to_uint(++str_begin, str_end);
+					width2 = impl::c_it_pair_to_uint(++str_begin, str_end);
 					break;
 				default:
 					throw std::invalid_argument{
@@ -274,10 +277,12 @@ struct format_data {
 	size_t base = 10;
 };
 
+} //namespace x
+namespace impl {
 
 class printer_interface {
 public:
-	virtual void print(std::string& outstring, const format_data& formatting) const = 0;
+	virtual void print(std::string& outstring, const x::format_data& formatting) const = 0;
 };
 
 template<size_t Size>
@@ -291,7 +296,7 @@ public:
 	printer(const T& value) : value{&value} {}
 	printer& operator=(const T& value) {this->value = &value; return *this;}
 	void set_value(const T& new_value) {value = &new_value;}
-	void print(std::string& output, const format_data& format_data) const final override {
+	void print(std::string& output, const x::format_data& format_data) const final override {
 		print_to_string(output, *value, format_data);
 	}
 };
@@ -303,9 +308,12 @@ template<typename T, typename MinIterator> struct is_min_iterator : std::conditi
 		typename std::iterator_traits<T>::iterator_category>{},
 	std::true_type, std::false_type>::type {};
 
+} //namespace impl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                   print_to_string-family                                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+namespace x {
 
 // declarations:
 
@@ -341,7 +349,7 @@ template<typename T1, typename T2>
 inline void print_to_string(std::string& output, const std::pair<T1, T2>& value, const format_data& data);
 
 template<typename Container, class RequireIterator = typename std::enable_if<
-	is_min_iterator<typename Container::iterator, std::bidirectional_iterator_tag>{}>::type>
+	impl::is_min_iterator<typename Container::iterator, std::bidirectional_iterator_tag>{}>::type>
 inline void print_to_string(std::string& output, const Container& value, const format_data& data);
 
 // forward range
@@ -350,7 +358,7 @@ template<typename Container, class RequireIterator = typename std::enable_if<std
 inline void print_to_string(std::string& output, const Container& value, const format_data& data);
 
 template<typename Iterator, class = typename std::enable_if<
-	is_min_iterator<Iterator, std::bidirectional_iterator_tag>{}>::type>
+	impl::is_min_iterator<Iterator, std::bidirectional_iterator_tag>{}>::type>
 inline void print_to_string(std::string& output, const std::pair<Iterator, Iterator>& value,
 		const format_data& data);
 
@@ -528,6 +536,7 @@ inline void print_to_string(std::string& output, const Container& value, const f
 }
 
 
+namespace impl {
 // helper for print_to_string(..., iterator_pair,...); no voldemort-type because of clang-bug
 template<typename Iterator>
 struct range_helper {
@@ -538,16 +547,17 @@ struct range_helper {
 	Iterator begin() const { return b; }
 	Iterator end() const { return e; }
 };
+} // namespace yoga::x::impl
 
 template<typename Iterator, class>
 inline void print_to_string(std::string& output, const std::pair<Iterator, Iterator>& value,
 		const format_data& data) {
-	print_to_string(output, range_helper<Iterator>{value.first, value.second}, data);
+	print_to_string(output, impl::range_helper<Iterator>{value.first, value.second}, data);
 }
 template<typename Iterator, class>
 inline void print_to_string(std::string& output, const std::tuple<Iterator, Iterator>& value,
 		const format_data& data) {
-	print_to_string(output, range_helper<Iterator>{std::get<0>(value), std::get<1>(value)}, data);
+	print_to_string(output, impl::range_helper<Iterator>{std::get<0>(value), std::get<1>(value)}, data);
 }
 
 template<size_t N, size_t I, typename...T> struct tuple_printer {
@@ -581,9 +591,13 @@ inline void print_to_string(std::string& output, bool value, const format_data& 
 			throw std::invalid_argument{"invalid specifier for bool"};
 	}
 }
+
+} //namsepace x
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                   print_to_string-family end                                   //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+namespace impl {
 
 template<size_t Index = 0, size_t ArraySize, typename Arg, typename...Args>
 void prepare_printers(printer_list<ArraySize>& array,
@@ -621,7 +635,7 @@ void format_impl(const std::string& formatstring, std::string& output,
 				throw std::invalid_argument{"invalid formatstring"};
 			}
 			++formatslice_end;
-			format_data data{formatslice_begin, formatslice_end, print_index};
+			x::format_data data{formatslice_begin, formatslice_end, print_index};
 			if(data.index >= ArraySize) {
 				throw std::invalid_argument{
 					"formatstring requests nonexisting argument"};
