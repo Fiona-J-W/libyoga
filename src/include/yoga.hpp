@@ -70,14 +70,19 @@ template<typename...T>
 std::string format(const std::string& format, const T&...args);
 
 template<typename...T>
-std::string concat(const T&...args);
-
-template<typename...T>
 void writef(const std::string& format, const T&...args);
-
 
 template<typename...T>
 void writefln(std::string format, const T&...args);
+
+template<typename...T>
+std::string concat(const T&...args);
+
+template<typename...T>
+void write(const T&...args);
+
+template<typename...T>
+void writeln(const T&...args);
 
 
 template<typename Derived>
@@ -239,8 +244,9 @@ size_t c_it_pair_to_uint(InputIterator& it, InputIterator end) {
 namespace x {
 
 struct format_data {
-	format_data(std::string::const_iterator str_begin, std::string::const_iterator str_end,
-			size_t& default_index) :index{default_index} {
+	void init(std::string::const_iterator str_begin, std::string::const_iterator str_end,
+			size_t& default_index) {
+		index = default_index;
 		specifier = *--str_end;
 		bool increment_default_index = true;
 		while(str_begin != str_end) {
@@ -272,6 +278,16 @@ struct format_data {
 			++ default_index;
 		}
 	}
+	
+	format_data(std::string::const_iterator str_begin, std::string::const_iterator str_end,
+			size_t& default_index) {
+		init(str_begin, str_end, default_index);
+	}
+	format_data(const std::string& str) {
+		size_t tmp_index{0};
+		init(str.begin(), str.end(), tmp_index);
+	}
+	
 	format_data(char spec, char fill, size_t index, size_t w1, size_t w2, size_t b):
 		specifier{spec}, fill{fill}, index{index}, width1{w1}, width2{w2}, base{b} {}
 	format_data() = default;
@@ -735,7 +751,7 @@ inline void write_to_stdout(const std::string& str) {
 	static std::mutex m;
 	std::lock_guard<std::mutex> g{m};
 #ifdef YOGA_USE_POSIX
-	write(1, static_cast<const void*>(str.c_str()), str.size());
+	::write(1, static_cast<const void*>(str.c_str()), str.size());
 #else
 	// Don't use this if you don't have too:
 	std::cout << str << std::flush;
@@ -770,6 +786,19 @@ void writef(const std::string& formatstring, const T&...args) {
 template<typename...T>
 void writefln(std::string format, const T&...args) {
 	writef(format+'\n', args...);
+}
+
+template<typename...T>
+void write(const T&...args) {
+	thread_local static std::string buffer;
+	buffer.clear();
+	impl::concat(buffer, args...);
+	impl::write_to_stdout(buffer);
+}
+
+template<typename...T>
+void writeln(const T&...args) {
+	write(args..., '\n');
 }
 
 inline void set_debug_level(int level) {

@@ -61,5 +61,8 @@ int main() {
 	yoga::writefln("print some user-type: %s", testdatum);
 	
 	assert(yoga::concat("foo", "bar", 3, 'c') == "foobar3c");
-	assert(yoga::concat("foo", "bar", yoga::x::format_data{}, 3, 'c') == "foobar3c");
+	assert(yoga::concat("foo", "bar", yoga::x::format_data{"~3s"}, 3, 'c') == "foobar  3c");
+	
+	yoga::write(1,2,3);
+	yoga::writeln(4, yoga::x::format_data{"~3*0s"}, 5, 6);
 }
