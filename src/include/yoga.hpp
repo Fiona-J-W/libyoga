@@ -71,6 +71,9 @@ namespace yoga {
 template<typename...T>
 std::string format(const std::string& format, const T&...args);
 
+template<typename...Args>
+void appendf(std::string& output, const std::string& formatstring, const Args&...args);
+
 template<typename...T>
 void writef(const std::string& format, const T&...args);
 
@@ -80,12 +83,14 @@ void writefln(std::string format, const T&...args);
 template<typename...T>
 std::string concat(const T&...args);
 
+template<typename...Args>
+void append(std::string& output, const Args&...args);
+
 template<typename...T>
 void write(const T&...args);
 
 template<typename...T>
 void writeln(const T&...args);
-
 
 template<typename Derived>
 class output_base {
@@ -649,7 +654,7 @@ template<size_t Index = 0, size_t ArraySize>
 inline void prepare_printers(printer_list<ArraySize>&){}
 
 template<size_t ArraySize>
-void format_impl(const std::string& formatstring, std::string& output,
+void format_impl(std::string& output, const std::string& formatstring,
 		const printer_list<ArraySize>& printers) {
 	auto formatslice_begin = formatstring.begin();
 	auto formatslice_end = formatstring.begin();
@@ -685,7 +690,7 @@ void format_impl(const std::string& formatstring, std::string& output,
 }
 
 template<>
-inline void format_impl(const std::string& formatstring, std::string& output,
+inline void format_impl(std::string& output, const std::string& formatstring,
 		const printer_list<0>&) {
 	auto it1 = formatstring.begin();
 	auto it2 = it1;
@@ -710,13 +715,6 @@ inline void format_impl(const std::string& formatstring, std::string& output,
 }
 
 
-template<typename...Args>
-void format(const std::string& formatstring, std::string& output, const Args&...args) {
-	thread_local static std::array<impl::printer_interface const*, sizeof...(Args)> printers;
-	impl::prepare_printers(printers, args...);
-	impl::format_impl(formatstring, output, printers);
-}
-
 inline void concat_impl(const std::string&, const x::format_data&) {}
 template<typename Arg, typename...Args>
 void concat_impl(std::string& output, const x::format_data& default_format,
@@ -736,12 +734,6 @@ void concat_impl(std::string& output, const x::format_data& default_format,
 	concat_impl(output, default_format, args...);
 }
 
-template<typename...Args>
-void concat(std::string& output, const Args&...args) {
-	static const x::format_data default_format{};
-	concat_impl(output, default_format, args...);
-}
-
 inline std::atomic_int& get_debug_level() {
 	static std::atomic_int level{10};
 	return level;
@@ -752,9 +744,9 @@ void debug(const char * const file, int line, const char * const func, int level
 		const std::string& formatstring, const T&...args) {
 	if(level <= get_debug_level().load()) {
 		std::string outstr;
-		format("DEBUG(%s) ['%s', #%s, '%s']: ", outstr, level, file, line,
+		appendf(outstr, "DEBUG(%s) ['%s', #%s, '%s']: ", level, file, line,
 				func);
-		format(formatstring, outstr, args...);
+		appendf(outstr, formatstring, args...);
 		outstr += '\n';
 		write_to_stdout(outstr);
 	}
@@ -773,10 +765,23 @@ inline void write_to_stdout(const std::string& str) {
 
 } // namespace impl
 
+template<typename...Args>
+void append(std::string& output, const Args&...args) {
+	static const x::format_data default_format{};
+	impl::concat_impl(output, default_format, args...);
+}
+
+template<typename...Args>
+void appendf(std::string& output, const std::string& formatstring, const Args&...args) {
+	thread_local static std::array<impl::printer_interface const*, sizeof...(Args)> printers;
+	impl::prepare_printers(printers, args...);
+	impl::format_impl(output, formatstring, printers);
+}
+
 template<typename...T>
 std::string format(const std::string& format, const T&...args) {
 	std::string returnstring;
-	impl::format(format, returnstring, args...);
+	appendf(returnstring, format, args...);
 	return returnstring;
 }
 
@@ -784,7 +789,7 @@ std::string format(const std::string& format, const T&...args) {
 template<typename...T>
 std::string concat(const T&...args) {
 	std::string buffer;
-	impl::concat(buffer, args...);
+	append(buffer, args...);
 	return buffer;
 }
 
@@ -792,7 +797,7 @@ template<typename...T>
 void writef(const std::string& formatstring, const T&...args) {
 	thread_local static std::string buffer;
 	buffer.clear();
-	impl::format(formatstring, buffer, args...);
+	appendf(buffer, formatstring, args...);
 	impl::write_to_stdout(buffer);
 }
 
@@ -805,7 +810,7 @@ template<typename...T>
 void write(const T&...args) {
 	thread_local static std::string buffer;
 	buffer.clear();
-	impl::concat(buffer, args...);
+	append(buffer, args...);
 	impl::write_to_stdout(buffer);
 }
 
