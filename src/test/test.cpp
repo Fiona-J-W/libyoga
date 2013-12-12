@@ -59,4 +59,7 @@ int main() {
 	
 	test::foo testdatum{3, "str"};
 	yoga::writefln("print some user-type: %s", testdatum);
+	
+	assert(yoga::concat("foo", "bar", 3, 'c') == "foobar3c");
+	assert(yoga::concat("foo", "bar", yoga::x::format_data{}, 3, 'c') == "foobar3c");
 }

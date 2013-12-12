@@ -69,6 +69,8 @@ namespace yoga {
 template<typename...T>
 std::string format(const std::string& format, const T&...args);
 
+template<typename...T>
+std::string concat(const T&...args);
 
 template<typename...T>
 void writef(const std::string& format, const T&...args);
@@ -214,6 +216,9 @@ inline void set_debug_level(int level);
 //                   Implementation starts here                       //
 ////////////////////////////////////////////////////////////////////////
 
+#ifndef YOGA_REQUIRE
+#	define YOGA_REQUIRE(...) class = typename std::enable_if<__VA_ARGS__>::type
+#endif
 
 namespace impl {
 
@@ -269,9 +274,11 @@ struct format_data {
 	}
 	format_data(char spec, char fill, size_t index, size_t w1, size_t w2, size_t b):
 		specifier{spec}, fill{fill}, index{index}, width1{w1}, width2{w2}, base{b} {}
-	char specifier;
+	format_data() = default;
+	
+	char specifier = 's';
 	char fill = ' ';
-	size_t index;
+	size_t index = 0;
 	size_t width1 = 0;
 	size_t width2 = 10;
 	size_t base = 10;
@@ -307,6 +314,8 @@ template<typename T, typename MinIterator> struct is_min_iterator : std::conditi
 	|| std::is_same< MinIterator,
 		typename std::iterator_traits<T>::iterator_category>{},
 	std::true_type, std::false_type>::type {};
+
+template<typename T> using decay = typename std::decay<T>::type;
 
 } //namespace impl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -679,6 +688,31 @@ void format(const std::string& formatstring, std::string& output, const Args&...
 	impl::format_impl(formatstring, output, printers);
 }
 
+inline void concat_impl(const std::string&, const x::format_data&) {}
+template<typename Arg, typename...Args>
+void concat_impl(std::string& output, const x::format_data& default_format,
+		const x::format_data& format, const Arg& arg, const Args&...args);
+
+template<typename Arg, typename...Args, YOGA_REQUIRE(!std::is_same<decay<Arg>, x::format_data>{})>
+void concat_impl(std::string& output, const x::format_data& format, const Arg& arg,
+		const Args&...args) {
+	print_to_string(output, arg, format);
+	concat_impl(output, format, args...);
+}
+
+template<typename Arg, typename...Args>
+void concat_impl(std::string& output, const x::format_data& default_format,
+		const x::format_data& format, const Arg& arg, const Args&...args) {
+	print_to_string(output, arg, format);
+	concat_impl(output, default_format, args...);
+}
+
+template<typename...Args>
+void concat(std::string& output, const Args&...args) {
+	static const x::format_data default_format{};
+	concat_impl(output, default_format, args...);
+}
+
 inline std::atomic_int& get_debug_level() {
 	static std::atomic_int level{10};
 	return level;
@@ -717,6 +751,13 @@ std::string format(const std::string& format, const T&...args) {
 	return returnstring;
 }
 
+
+template<typename...T>
+std::string concat(const T&...args) {
+	std::string buffer;
+	impl::concat(buffer, args...);
+	return buffer;
+}
 
 template<typename...T>
 void writef(const std::string& formatstring, const T&...args) {
