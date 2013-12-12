@@ -357,6 +357,7 @@ inline void print_to_string(std::string& output, const std::pair<Iterator, Itera
 template<typename...T>
 inline void print_to_string(std::string& output, const std::tuple<T...>& value, const format_data& data);
 
+///////////////////////
 // definitions:
 
 inline void print_to_string(std::string& output, const std::string& value, const format_data& data) {
@@ -526,18 +527,27 @@ inline void print_to_string(std::string& output, const Container& value, const f
 	output.push_back(']');
 }
 
+
+// helper for print_to_string(..., iterator_pair,...); no voldemort-type because of clang-bug
+template<typename Iterator>
+struct range_helper {
+	Iterator b;
+	Iterator e;
+	typedef Iterator iterator;
+	
+	Iterator begin() const { return b; }
+	Iterator end() const { return e; }
+};
+
 template<typename Iterator, class>
 inline void print_to_string(std::string& output, const std::pair<Iterator, Iterator>& value,
 		const format_data& data) {
-	
-	struct range_helper {
-		Iterator b;
-		Iterator e;
-		
-		Iterator begin() const { return b; }
-		Iterator end() const { return e; }
-	};
-	print_to_string(output, range_helper{value.first, value.second}, data);
+	print_to_string(output, range_helper<Iterator>{value.first, value.second}, data);
+}
+template<typename Iterator, class>
+inline void print_to_string(std::string& output, const std::tuple<Iterator, Iterator>& value,
+		const format_data& data) {
+	print_to_string(output, range_helper<Iterator>{std::get<0>(value), std::get<1>(value)}, data);
 }
 
 template<size_t N, size_t I, typename...T> struct tuple_printer {

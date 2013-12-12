@@ -39,4 +39,7 @@ int main() {
 	yoga::writefln("float: %s, double: %s, long double: %s", 3.141f, 3.141592654, 2.718281828L);
 	
 	yoga::writefln("forward-range: %s", std::forward_list<int>{1,2,3,4,5});
+	
+	std::vector<float> vec{1.0, 2.3, 3.5};
+	yoga::writefln("iterator-pair: %s", std::make_pair(vec.begin(), vec.end()));
 }
