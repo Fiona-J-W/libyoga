@@ -23,15 +23,17 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
-#include <climits>
 #include <cctype>
+#include <climits>
 #include <cstddef>
 #include <cstdio>
+#include <iomanip>
 #include <iterator>
 #include <mutex>
+#include <sstream>
 #include <stdexcept>
-#include <system_error>
 #include <string>
+#include <system_error>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -417,10 +419,21 @@ void print_to_string(std::string& output, char value[N], const format_data& data
 // floating-point
 template<typename T, class>
 void print_to_string(std::string& output, T value, const format_data& data) {
-	if(data.specifier != 's') {
-		throw std::invalid_argument{"invalid specifier for floating-point-number"};
+	std::ostringstream stream;
+	switch (data.specifier) {
+		case 's':
+			break;
+		case 'e':
+			stream << std::scientific;
+			break;
+		case 'f':
+			stream << std::fixed;
+			break;
+		default:
+			throw std::invalid_argument{"invalid specifier for floating-point-number"};
 	}
-	output.append(std::to_string(value));
+	stream << std::setprecision(data.width2) << value;
+	output.append(stream.str());
 }
 
 // signed integer
