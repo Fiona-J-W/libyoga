@@ -8,6 +8,20 @@
 #include "../include/yoga.hpp"
 
 
+namespace test {
+	
+	struct foo{
+		int bar;
+		std::string baz;
+	};
+	
+	void print_to_string(std::string& output, const foo& value, const ::yoga::impl::format_data& data) {
+		output.append("foo");
+		print_to_string(output, std::tie(value.bar, value.baz), data);
+	}
+	
+}
+
 int main() {
 	
 	int tmp = 3;
@@ -42,4 +56,7 @@ int main() {
 	
 	std::vector<float> vec{1.0, 2.3, 3.5};
 	yoga::writefln("iterator-pair: %s", std::make_pair(vec.begin(), vec.end()));
+	
+	test::foo testdatum{3, "str"};
+	yoga::writefln("print some user-type: %s", testdatum);
 }
