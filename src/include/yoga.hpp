@@ -228,12 +228,8 @@ inline void set_debug_level(int level);
 //                   Implementation starts here                       //
 ////////////////////////////////////////////////////////////////////////
 
-#ifndef YOGA_REQUIRE
-#	define YOGA_REQUIRE(...) class = typename std::enable_if<__VA_ARGS__>::type
-#endif
-#ifndef YOGA_REQUIRE_N
-#	define YOGA_REQUIRE_N(NAME, ...) class NAME = typename std::enable_if<__VA_ARGS__>::type
-#endif
+#define YOGA_REQUIRE(...) class = typename std::enable_if<__VA_ARGS__>::type
+#define YOGA_REQUIRE_N(NAME, ...) class NAME = typename std::enable_if<__VA_ARGS__>::type
 
 namespace impl {
 
