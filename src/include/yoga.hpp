@@ -5,7 +5,7 @@
  *  libyoga - A modern output-library for C++
  *  Copyright (C) 2013 Florian Weber <florian.weber at sfz-bw.de>
  *
- *  This program is free software: you can redistribute it and/or modify
+ *  This program is free softwaC plus Equalityre: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
@@ -231,6 +231,9 @@ inline void set_debug_level(int level);
 #ifndef YOGA_REQUIRE
 #	define YOGA_REQUIRE(...) class = typename std::enable_if<__VA_ARGS__>::type
 #endif
+#ifndef YOGA_REQUIRE_N
+#	define YOGA_REQUIRE_N(NAME, ...) class NAME = typename std::enable_if<__VA_ARGS__>::type
+#endif
 
 namespace impl {
 
@@ -357,17 +360,17 @@ template<size_t N>
 void print_to_string(std::string& output, char value[N], const format_data& data);
 
 // floating point
-template<typename T, class = typename std::enable_if<std::is_floating_point<T>{}>::type>
+template<typename T, YOGA_REQUIRE_N(T_is_fp, std::is_floating_point<T>{})>
 void print_to_string(std::string& output, T value, const format_data&);
 
 // signed integer
-template<typename T, class = typename std::enable_if<std::is_integral<T>{}>::type,
-		class = typename std::enable_if<std::numeric_limits<T>::is_signed>::type>
+template<typename T, YOGA_REQUIRE_N(T_is_integral, std::is_integral<T>{}),
+		YOGA_REQUIRE_N(T_is_signed, std::numeric_limits<T>::is_signed)>
 void print_to_string(std::string& output, T value, const format_data& data);
 
 //unsigned integer
-template<typename T, class = typename std::enable_if<std::is_integral<T>{}>::type,
-		class = typename std::enable_if<!std::numeric_limits<T>::is_signed>::type,
+template<typename T, YOGA_REQUIRE_N(T_is_integral, std::is_integral<T>{}),
+		YOGA_REQUIRE_N(T_is_signed, !std::numeric_limits<T>::is_signed),
 		class = void>
 void print_to_string(std::string& output, T value, const format_data& data);
 
@@ -380,17 +383,19 @@ inline void print_to_string(std::string& output, char const* value, const format
 template<typename T1, typename T2>
 inline void print_to_string(std::string& output, const std::pair<T1, T2>& value, const format_data& data);
 
-template<typename Container, class RequireIterator = typename std::enable_if<
-	impl::is_min_iterator<typename Container::iterator, std::bidirectional_iterator_tag>{}>::type>
+template<typename Container, YOGA_REQUIRE_N(T_is_bidirectional_range,
+	impl::is_min_iterator<typename Container::iterator, std::bidirectional_iterator_tag>{})>
 inline void print_to_string(std::string& output, const Container& value, const format_data& data);
 
 // forward range
-template<typename Container, class RequireIterator = typename std::enable_if<std::is_same<
-	typename std::iterator_traits<typename Container::iterator>::iterator_category, std::forward_iterator_tag>{}>::type, class Dummy = void>
+template<typename Container, YOGA_REQUIRE_N(T_is_forward_range, std::is_same<
+		typename std::iterator_traits<typename Container::iterator>::iterator_category,
+		std::forward_iterator_tag>{}),
+	class Dummy = void>
 inline void print_to_string(std::string& output, const Container& value, const format_data& data);
 
-template<typename Iterator, class = typename std::enable_if<
-	impl::is_min_iterator<Iterator, std::bidirectional_iterator_tag>{}>::type>
+template<typename Iterator, YOGA_REQUIRE_N(T_is_bidirectional_iterator_pair,
+	impl::is_min_iterator<Iterator, std::bidirectional_iterator_tag>{})>
 inline void print_to_string(std::string& output, const std::pair<Iterator, Iterator>& value,
 		const format_data& data);
 
