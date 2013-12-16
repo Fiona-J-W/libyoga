@@ -42,9 +42,6 @@
 #	ifndef YOGA_USE_POSIX
 #		define YOGA_USE_POSIX
 #	endif
-#	ifndef YOGA_USE_DEBUGGING_UTILITIES
-#		define YOGA_USE_DEBUGGING_UTILITIES
-#	endif
 #	ifndef YOGA_USE_PRETTY_FUNC
 #		define YOGA_USE_PRETTY_FUNC
 #	endif
@@ -191,37 +188,29 @@ public:
 
 #endif
 
-#ifdef YOGA_USE_DEBUGGING_UTILITIES
 
 inline void set_debug_level(int level);
 
-#ifdef YOGA_DEBUG_ON
-
 #ifdef YOGA_USE_PRETTY_FUNC
-#define YOGA_FUNC  __PRETTY_FUNCTION__
+#	define YOGA_FUNC  __PRETTY_FUNCTION__
 #else
-#define YOGA_FUNC __func__
+#	define YOGA_FUNC __func__
 #endif
 
-#ifdef YOGA_USE_CLEAN_MACROS
-#define YOGA_DEBUG(...) ::yoga::impl::debug(__FILE__, __LINE__, YOGA_FUNC, 0, __VA_ARGS__)
-#define YOGA_DEBUGL(...) ::yoga::impl::debug(__FILE__, __LINE__, YOGA_FUNC, __VA_ARGS__)
+#ifdef YOGA_DEBUG_ON
+#	define YOGA_DEBUG(...) ::yoga::impl::debug(__FILE__, __LINE__, YOGA_FUNC, 0, __VA_ARGS__)
+#	define YOGA_DEBUGL(...) ::yoga::impl::debug(__FILE__, __LINE__, YOGA_FUNC, __VA_ARGS__)
+#	ifdef YOGA_USE_TERSE_MACROS
+#		define DEBUG(...) ::yoga::impl::debug(__FILE__, __LINE__, YOGA_FUNC, 0, __VA_ARGS__)
+#		define DEBUGL(...) ::yoga::impl::debug(__FILE__, __LINE__, YOGA_FUNC, __VA_ARGS__)
+#	endif
 #else
-#define DEBUG(...) ::yoga::impl::debug(__FILE__, __LINE__, YOGA_FUNC, 0, __VA_ARGS__)
-#define DEBUGL(...) ::yoga::impl::debug(__FILE__, __LINE__, YOGA_FUNC, __VA_ARGS__)
-#endif
-
-#else
-
-#ifdef YOGA_USE_CLEAN_MACROS
-#define YOGA_DEBUG(...)   do{}while(false)
-#define YOGA_DEBUGL(...)   do{}while(false)
-#else
-#define DEBUG(...)   do{}while(false)
-#define DEBUGL(...)   do{}while(false)
-#endif
-
-#endif
+#	define YOGA_DEBUG(...)   do{}while(false)
+#	define YOGA_DEBUGL(...)   do{}while(false)
+#	ifdef YOGA_USE_TERSE_MACROS
+#		define DEBUG(...)   do{}while(false)
+#		define DEBUGL(...)   do{}while(false)
+#	endif
 #endif
 
 ////////////////////////////////////////////////////////////////////////

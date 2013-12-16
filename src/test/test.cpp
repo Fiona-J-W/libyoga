@@ -32,8 +32,8 @@ int main() {
 	//file.writef("some call to writef with parameter %s - ", 3);
 	//file.writefln("some call to writefln with parameter %s", 42);
 	
-	DEBUG("just a test with an arg: %s", 1337);
-	DEBUGL(1, "");
+	YOGA_DEBUG("just a test with an arg: %s", 1337);
+	YOGA_DEBUGL(1, "");
 	
 	yoga::format("%s, %@0p, %s", "foo", 3);
 	assert(yoga::format("a string with no args") == "a string with no args");
