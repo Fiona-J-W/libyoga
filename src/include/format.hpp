@@ -11,6 +11,8 @@
 #include <tuple>
 #include <utility>
 
+#include "util.hpp"
+
 namespace yoga {
 
 template<typename...T>
@@ -23,29 +25,14 @@ template<typename...T>
 std::string format(const std::string& format, const T&...args);
 
 template<typename...T>
-std::ostream& print_to_streamF(std::ostream& stream, const std::string& format, const T&...args);
+std::ostream& print_to_stream_formated(std::ostream& stream, const std::string& format, const T&...args);
 
 // Implementation
 /////////////////
 
-#define YOGA_REQUIRE(what, ...) class what = typename ::std::enable_if<__VA_ARGS__>::type
 
 namespace impl {
 
-// First: some helpers for template-metaprogramming:
-template<typename T> using decay = typename std::decay<T>::type;
-
-template<bool B> using bool_to_type = std::integral_constant<bool, B>;
-
-template<typename T1, typename T2>
-constexpr bool is_same() {
-	return std::is_same<T1, T2>::value;
-}
-
-template<typename Base, typename Derived>
-constexpr bool is_base_or_same() {
-	return is_same<Base, Derived>() || std::is_base_of<Base, Derived>::value;
-}
 
 // Categories of how a type might be printable
 enum class printable_category {
@@ -101,7 +88,7 @@ void print_to_stream(std::ostream& stream, const T& arg, const Args&...args) {
 inline std::tuple<std::string::const_iterator, bool> printFormatPartToStream(std::ostream& stream,
 		std::string::const_iterator begin, std::string::const_iterator end);
 
-inline void print_to_streamF(std::ostream& stream, std::string::const_iterator format_begin,
+inline void print_to_stream_formated(std::ostream& stream, std::string::const_iterator format_begin,
 		std::string::const_iterator format_end) {
 	bool print_argument;
 	using iterator = std::string::const_iterator;
@@ -112,7 +99,7 @@ inline void print_to_streamF(std::ostream& stream, std::string::const_iterator f
 	}
 }
 template<typename T, typename...Args>
-void print_to_streamF(std::ostream& stream, std::string::const_iterator format_begin,
+void print_to_stream_formated(std::ostream& stream, std::string::const_iterator format_begin,
 		std::string::const_iterator format_end, const T& arg, const Args&...args) {
 	bool print_argument;
 	using iterator = std::string::const_iterator;
@@ -120,7 +107,7 @@ void print_to_streamF(std::ostream& stream, std::string::const_iterator format_b
 	std::tie(it, print_argument) = printFormatPartToStream(stream, format_begin, format_end);
 	if(print_argument) {
 		print_to_stream(stream, arg);
-		print_to_streamF(stream, it, format_end, args...);
+		print_to_stream_formated(stream, it, format_end, args...);
 	} else {
 		assert(it == format_end);
 		return;
@@ -163,8 +150,8 @@ struct is_iteratable_helper {
 	
 	template<typename T,
 		class Iterator = decltype(std::begin(std::declval<T>())),
-		YOGA_REQUIRE(EndIteratorValid, is_same<Iterator, decltype(std::end(std::declval<T>()))>()),
-		YOGA_REQUIRE(HasInputIterator, is_base_or_same<std::input_iterator_tag,
+		YOGA_REQUIRE_N(EndIteratorValid, is_same<Iterator, decltype(std::end(std::declval<T>()))>()),
+		YOGA_REQUIRE_N(HasInputIterator, is_base_or_same<std::input_iterator_tag,
 			typename std::iterator_traits<Iterator>::iterator_category>())
 	> static std::true_type is_iteratable(const T&);
 };
@@ -175,7 +162,7 @@ template<typename T> constexpr bool is_iteratable() {
 // pair
 template<typename T              > struct is_pair_helper                    : std::false_type {};
 template<typename T1, typename T2> struct is_pair_helper<std::pair<T1, T2>> : std::true_type {};
-template<typename T> constexpr bool ispair() {
+template<typename T> constexpr bool is_pair() {
 	return is_pair_helper<T>::value;
 }
 
@@ -191,7 +178,7 @@ struct is_streamable_helper {
 	static std::false_type is_streamable(...);
 	
 	template<typename T,
-		YOGA_REQUIRE(streamable, is_base_or_same<std::ostream,
+		YOGA_REQUIRE_N(streamable, is_base_or_same<std::ostream,
 				decay<decltype(std::declval<std::ostream&>() << std::declval<const T&>())>>())
 	>
 	static std::true_type is_streamable(const T&);
@@ -279,13 +266,13 @@ std::ostream& print_to_stream(std::ostream& stream, const T&...args) {
 template<typename...T>
 std::string format(const std::string& format, const T&...args) {
 	std::stringstream stream;
-	print_to_streamF(stream, format, args...);
+	print_to_stream_formated(stream, format, args...);
 	return stream.str();
 }
 
 template<typename...T>
-std::ostream& print_to_streamF(std::ostream& stream, const std::string& format, const T&...args) {
-	impl::print_to_streamF(stream, format.begin(), format.end(), args...);
+std::ostream& print_to_stream_formated(std::ostream& stream, const std::string& format, const T&...args) {
+	impl::print_to_stream_formated(stream, format.begin(), format.end(), args...);
 	return stream;
 }
 

@@ -1,61 +1,11 @@
-#ifndef AUXILIARY_LOG_H_
-#define AUXILIARY_HOG_H_
+#ifndef YOGA_PRINT_HPP
+#define YOGA_PRINT_HPP
 
+#include <iosfwd>
 #include <iostream>
 #include <mutex>
 
 #include "format.hpp"
-
-#ifdef NOLOGGING
-
-#define FATAL(...) do{}while(false)
-#define ERROR(...) do{}while(false)
-#define WARN(...)  do{}while(false)
-#define INFO(...)  do{}while(false)
-#define DEBUG(...) do{}while(false)
-#define TRACE(...) do{}while(false)
-
-#define FATALF(...) do{}while(false)
-#define ERRORF(...) do{}while(false)
-#define WARNF(...)  do{}while(false)
-#define INFOF(...)  do{}while(false)
-#define DEBUGF(...) do{}while(false)
-#define TRACEF(...) do{}while(false)
-
-#define TRACEPOINT do{}while(false)
-
-#else // NOLOGGING
-
-#define FATAL(...) ::yoga::log({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::fatal, __VA_ARGS__)
-#define ERROR(...) ::yoga::log({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::error, __VA_ARGS__)
-#define WARN(...)  ::yoga::log({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::warn,  __VA_ARGS__)
-#define INFO(...)  ::yoga::log({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::info,  __VA_ARGS__)
-#define DEBUG(...) ::yoga::log({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::debug, __VA_ARGS__)
-#define TRACE(...) ::yoga::log({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::trace, __VA_ARGS__)
-
-#define FATALF(...) ::yoga::logf({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::fatal, __VA_ARGS__)
-#define ERRORF(...) ::yoga::logf({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::error, __VA_ARGS__)
-#define WARNF(...)  ::yoga::logf({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::warn,  __VA_ARGS__)
-#define INFOF(...)  ::yoga::logf({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::info,  __VA_ARGS__)
-#define DEBUGF(...) ::yoga::logf({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::debug, __VA_ARGS__)
-#define TRACEF(...) ::yoga::logf({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::trace, __VA_ARGS__)
-
-#define TRACEPOINT ::yoga::log({__FILE__, __PRETTY_FUNCTION__, __LINE__},\
-		::yoga::priority::trace, "tracepoint")
-
-#endif // NOLOGGING
 
 namespace yoga {
 
@@ -88,9 +38,36 @@ bool get_print_location();
 void set_logfile(const std::string& filename);
 }
 
+template<typename...Args>
+void write(const Args&...args);
+
+template<typename...Args>
+void writeln(const Args&...args);
+
+template<typename...Args>
+void writef(const std::string& format, const Args&...args);
+
+template<typename...Args>
+void writefln(const std::string& format, const Args&...args);
+
+
+template<typename...Args>
+void swrite(std::ostream& stream, const Args&...args);
+
+template<typename...Args>
+void swriteln(std::ostream& stream, const Args&...args);
+
+template<typename...Args>
+void swritef(std::ostream& stream, const std::string& format, const Args&...args);
+
+template<typename...Args>
+void swritefln(std::ostream& stream, const std::string& format, const Args&...args);
+
+// IMPLEMENATION
+/////////////////////////////////////////////////////////////
+
 namespace impl {
 void log(const location& loc, priority p, const std::string msg);
-} //namespace impl
 
 template<typename...T>
 void log(const location& loc, priority p, const T&...args) {
@@ -106,6 +83,47 @@ void logf(const location& loc, priority p, const std::string& format, const T&..
 	}
 }
 
+} //namespace impl
+
+template<typename...Args>
+void write(const Args&...args) {
+	print_to_stream(std::cout, args...);
+}
+
+template<typename...Args>
+void writeln(const Args&...args) {
+	print_to_stream(std::cout, args..., '\n');
+}
+
+template<typename...Args>
+void writef(const std::string& format, const Args&...args) {
+	print_to_stream_formated(std::cout, format, args...);
+}
+
+template<typename...Args>
+void writefln(const std::string& format, const Args&...args) {
+	print_to_stream_formated(std::cout, format + '\n', args...);
+}
+
+template<typename...Args>
+void swrite(std::ostream& stream, const Args&...args) {
+	print_to_stream(stream, args...);
+}
+
+template<typename...Args>
+void swriteln(std::ostream& stream, const Args&...args) {
+	print_to_stream(stream, args..., '\n');
+}
+
+template<typename...Args>
+void swritef(std::ostream& stream, const std::string& format, const Args&...args) {
+	print_to_stream_formated(stream, format, args...);
+}
+
+template<typename...Args>
+void swritefln(std::ostream& stream, const std::string& format, const Args&...args) {
+	print_to_stream_formated(stream, format + '\n', args...);
+}
 
 } // namespace yoga
 
