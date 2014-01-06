@@ -7,11 +7,11 @@
 
 
 CC = clang++
-CFLAGS = -Wall -Wextra -pedantic -std=c++11 -DYOGA_DEBUG_ON -DYOGA_BE_AWESOME -O0 -std=c++11 -D_GLIBCXX_DEBUG -g 
+CFLAGS = -Wall -Wextra -pedantic -std=c++11 -O3 -Werror -mtune=native -march=native 
 CLIBS = 
 INCLUDES = 
 TARGET = bin/test
-OBJECTS = build/dummy.o build/test.o
+OBJECTS = build/print.o build/dummy.o build/test.o
 
 
 ####################
@@ -35,7 +35,9 @@ all: $(TARGET)
 #Dependencies:
 
 
-build/dummy.o: src/test/dummy.cpp src/include/yoga.hpp 
+build/print.o: src/include/print.cpp src/include/format.hpp src/include/print.hpp src/include/util.hpp 
 
-build/test.o: src/test/test.cpp src/include/yoga.hpp 
+build/dummy.o: src/test/dummy.cpp src/include/format.hpp src/include/macros.hpp src/include/print.hpp src/include/util.hpp src/include/yoga.hpp 
+
+build/test.o: src/test/test.cpp src/include/format.hpp src/include/macros.hpp src/include/print.hpp src/include/util.hpp src/include/yoga.hpp 
 
