@@ -77,9 +77,9 @@ void log(const location& loc, priority p, const T&...args) {
 }
 
 template<typename...T>
-void logf(const location& loc, priority p, const std::string& format, const T&...args) {
+void logf(const location& loc, priority p, const std::string& formatstring, const T&...args) {
 	if(p >= settings::get_priority()) {
-		impl::log(loc, p, format(args...));
+		impl::log(loc, p, format(formatstring, args...));
 	}
 }
 
@@ -96,13 +96,13 @@ void writeln(const Args&...args) {
 }
 
 template<typename...Args>
-void writef(const std::string& format, const Args&...args) {
-	print_to_stream_formated(std::cout, format, args...);
+void writef(const std::string& formatstring, const Args&...args) {
+	print_to_stream_formated(std::cout, formatstring, args...);
 }
 
 template<typename...Args>
-void writefln(const std::string& format, const Args&...args) {
-	print_to_stream_formated(std::cout, format + '\n', args...);
+void writefln(const std::string& formatstring, const Args&...args) {
+	print_to_stream_formated(std::cout, formatstring + '\n', args...);
 }
 
 template<typename...Args>
@@ -116,13 +116,13 @@ void swriteln(std::ostream& stream, const Args&...args) {
 }
 
 template<typename...Args>
-void swritef(std::ostream& stream, const std::string& format, const Args&...args) {
-	print_to_stream_formated(stream, format, args...);
+void swritef(std::ostream& stream, const std::string& formatstring, const Args&...args) {
+	print_to_stream_formated(stream, formatstring, args...);
 }
 
 template<typename...Args>
-void swritefln(std::ostream& stream, const std::string& format, const Args&...args) {
-	print_to_stream_formated(stream, format + '\n', args...);
+void swritefln(std::ostream& stream, const std::string& formatstring, const Args&...args) {
+	print_to_stream_formated(stream, formatstring + '\n', args...);
 }
 
 } // namespace yoga
