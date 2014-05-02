@@ -31,6 +31,12 @@ While streams solve these problems they create several themselves:
 Since this situation is clearly less then great, libyoga was invented to get rid of all of these
 disadvantages and create few new ones.
 
+The current status of the project is that it solves all the problems of printf, but has lost it's
+formatting-support since it was basically rewritten from scratch. The current implementation also
+favours convenience over performance and is still build on top of the stdlib's stream-library. The
+longtime-goal is to overcome these limitations.
+
+
 Name
 ----
 Naming is sometimes considered one of the hardest things in software-engeneering. Therefore the author
