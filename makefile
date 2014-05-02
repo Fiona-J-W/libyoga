@@ -6,9 +6,9 @@
 #Settings:
 
 
-CC = clang++
-CFLAGS = -Wall -Wextra -pedantic -std=c++11 -O3 -Werror -mtune=native -march=native 
-CLIBS = 
+CXX ?= g++
+FLAGS +=  -Wall -Wextra -pedantic -std=c++11 -O3 -mtune=native -Werror 
+LIBS += 
 INCLUDES = 
 TARGET = bin/test
 OBJECTS = build/print.o build/dummy.o build/test.o
@@ -19,11 +19,11 @@ OBJECTS = build/print.o build/dummy.o build/test.o
 
 
 $(TARGET) : $(OBJECTS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(CLIBS)
+	$(CXX) $(FLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
 build/%.o:
 	@if test ! -d 'build'; then mkdir 'build'; echo "created 'build'" ; fi
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CXX) $(FLAGS) $(INCLUDES) -c -o $@ $<
 
 clean:
 	rm build/*.o
@@ -35,9 +35,9 @@ all: $(TARGET)
 #Dependencies:
 
 
-build/print.o: src/include/print.cpp src/include/format.hpp src/include/print.hpp src/include/util.hpp 
+build/print.o: src/include/print.cpp src/include/format.hpp src/include/print.hpp src/include/util.hpp makefile
 
-build/dummy.o: src/test/dummy.cpp src/include/format.hpp src/include/macros.hpp src/include/print.hpp src/include/util.hpp src/include/yoga.hpp 
+build/dummy.o: src/test/dummy.cpp src/include/format.hpp src/include/macros.hpp src/include/print.hpp src/include/util.hpp src/include/yoga.hpp makefile
 
-build/test.o: src/test/test.cpp src/include/format.hpp src/include/macros.hpp src/include/print.hpp src/include/util.hpp src/include/yoga.hpp 
+build/test.o: src/test/test.cpp src/include/format.hpp src/include/macros.hpp src/include/print.hpp src/include/util.hpp src/include/yoga.hpp makefile
 

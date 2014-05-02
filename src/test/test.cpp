@@ -22,8 +22,8 @@ void fun1() {
 
 int main() {
 	yoga::settings::set_priority(yoga::priority::trace);
-	yoga::settings::set_print_location(true);
-	yoga::settings::set_print_time(true);
+	//yoga::settings::set_print_location(true);
+	//yoga::settings::set_print_time(true);
 	YOGA_TRACEPOINT;
 	YOGA_INFO("starting program");
 	
