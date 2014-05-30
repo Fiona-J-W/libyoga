@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <ios>
 
-#include "print.hpp"
+#include "../include/print.hpp"
 
 namespace yoga {
 
@@ -59,6 +59,12 @@ void print_priority(std::ostream& stream, priority p) {
 			stream << "[Debug]"; break;
 		case priority::trace:
 			stream << "[Trace]"; break;
+		default:
+			#ifdef __GNUC__
+				__builtin_unreachable ();
+			#else
+				std::terminate();
+			#endif
 	}
 }
 
@@ -83,6 +89,12 @@ std::tuple<std::string, std::string> get_terminal_format(priority p) {
 		case priority::debug:
 		case priority::trace:
 			return std::make_tuple("", "");
+		default:
+			#ifdef __GNUC__
+				__builtin_unreachable ();
+			#else
+				std::terminate();
+			#endif
 	}
 }
 

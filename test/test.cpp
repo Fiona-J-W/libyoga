@@ -20,6 +20,8 @@ void fun1() {
 	YOGA_TRACEPOINT;
 }
 
+struct unprintable{};
+
 int main() {
 	yoga::settings::set_priority(yoga::priority::trace);
 	//yoga::settings::set_print_location(true);
@@ -58,6 +60,8 @@ int main() {
 	YOGA_INFO("Calling some annotated function");
 	fun1();
 	YOGA_TRACEPOINT;
+	
+	//yoga::writefln("try printing something unprintable: %s", unprintable{});
 	
 	YOGA_WARN("reaching end of programm");
 	YOGA_FATAL(u8"Now it really ends…");

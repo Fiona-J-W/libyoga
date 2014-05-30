@@ -1,4 +1,4 @@
-# Makefile for bin/test
+# Makefile for lib/libyoga.so
 # created with makefile-creator
 
 
@@ -6,12 +6,12 @@
 #Settings:
 
 
-CXX ?= g++
-FLAGS +=  -Wall -Wextra -pedantic -std=c++11 -O3 -mtune=native -Werror 
+CXX = g++
+FLAGS +=  -Wall -Wextra -pedantic -std=c++1y -shared -fPIC -O3 -mtune=native -Werror 
 LIBS += 
-INCLUDES = 
-TARGET = bin/test
-OBJECTS = build/print.o build/dummy.o build/test.o
+INCLUDES += 
+TARGET = lib/libyoga.so
+OBJECTS = build/print.o
 
 
 ####################
@@ -35,9 +35,5 @@ all: $(TARGET)
 #Dependencies:
 
 
-build/print.o: src/include/print.cpp src/include/format.hpp src/include/print.hpp src/include/util.hpp makefile
-
-build/dummy.o: src/test/dummy.cpp src/include/format.hpp src/include/macros.hpp src/include/print.hpp src/include/util.hpp src/include/yoga.hpp makefile
-
-build/test.o: src/test/test.cpp src/include/format.hpp src/include/macros.hpp src/include/print.hpp src/include/util.hpp src/include/yoga.hpp makefile
+build/print.o: src/lib/print.cpp src/include/format.hpp src/include/print.hpp src/include/util.hpp makefile
 
