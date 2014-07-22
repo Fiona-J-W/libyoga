@@ -1,4 +1,4 @@
-# Makefile for a.out
+# Makefile for ../bin/tests
 # created with makefile-creator
 
 
@@ -10,8 +10,8 @@ CXX ?= g++
 FLAGS +=  -Wall -Wextra -Wpedantic -std=c++1y -O0 -D_GLIBCXX_DEBUG -g 
 LIBS += 
 INCLUDES += 
-TARGET = a.out
-OBJECTS = dummy.o test.o
+TARGET = ../bin/tests
+OBJECTS = ../build/dummy.o ../build/test.o
 
 
 ####################
@@ -21,11 +21,12 @@ OBJECTS = dummy.o test.o
 $(TARGET) : $(OBJECTS)
 	$(CXX) $(FLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
-%.o:
+../build/%.o:
+	@if test ! -d '../build'; then mkdir '../build'; echo "created '../build'" ; fi
 	$(CXX) $(FLAGS) $(INCLUDES) -c -o $@ $<
 
 clean:
-	rm *.o
+	rm ../build/*.o
 
 all: $(TARGET)
 
@@ -34,7 +35,7 @@ all: $(TARGET)
 #Dependencies:
 
 
-dummy.o: dummy.cpp makefile
+../build/dummy.o: dummy.cpp makefile
 
-test.o: test.cpp makefile
+../build/test.o: test.cpp makefile
 
