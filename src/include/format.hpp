@@ -11,60 +11,13 @@
 #include <tuple>
 #include <utility>
 
-//#include "util.hpp"
-
 namespace yoga {
-
-template<typename...T>
-std::string to_string(const T&...args);
-
-template<typename...T>
-std::ostream& print_to_stream(std::ostream& stream, const T&...args);
-
-template<typename...T>
-std::string format(const std::string& format, const T&...args);
-
-template<typename...T>
-std::ostream& print_to_stream_formated(std::ostream& stream, const std::string& format, const T&...args);
-
-// Implementation
-/////////////////
-
 
 namespace impl {
 
 
-// Categories of how a type might be printable
-enum class printable_category {
-	unprintable,
-	iteratable,
-	pair,
-	tuple,
-	streamable,
-};
 
-template<typename T> constexpr bool is_streamable();
-template<typename T> constexpr bool is_pair();
-template<typename T> constexpr bool is_tuple();
-template<typename T> constexpr bool is_iteratable();
-
-template<typename T>
-constexpr printable_category getprintable_category() {
-	return
-		is_streamable<T>() ? printable_category::streamable  :
-		is_pair<T>()       ? printable_category::pair        :
-		is_tuple<T>()      ? printable_category::tuple       :
-		is_iteratable<T>() ? printable_category::iteratable  :
-		/* else: */          printable_category::unprintable ;
-}
-template<printable_category Tag> struct printable_category_tag{};
-using iteratable_tag   = printable_category_tag< printable_category::iteratable  >;
-using pair_tag         = printable_category_tag< printable_category::pair        >;
-using tuple_tag        = printable_category_tag< printable_category::tuple       >;
-using streamable_tag   = printable_category_tag< printable_category::streamable  >;
-using unprintable_tag  = printable_category_tag< printable_category::unprintable >;
-
-template<typename T, typename...Args> void print_to_stream(std::ostream& stream, const T&, const Args&...);
+template<typename Output, typename> void print( const T&,);
 inline void print_to_stream(std::ostream&) {}
 
 template<typename T> void print_to_stream_tagged(std::ostream& stream, const T&, iteratable_tag);
@@ -141,53 +94,6 @@ inline std::tuple<std::string::const_iterator, bool> printFormatPartToStream(std
 	}
 }
 
-// Brace Yourself: Templatemetaprogramming is comming
-/////////////////////////////////////////////////////
-
-// iteratable
-struct is_iteratable_helper {
-	static std::false_type is_iteratable(...);
-	
-	template<typename T,
-		class Iterator = decltype(std::begin(std::declval<T>())),
-		YOGA_REQUIRE_N(EndIteratorValid, is_same<Iterator, decltype(std::end(std::declval<T>()))>()),
-		YOGA_REQUIRE_N(HasInputIterator, is_base_or_same<std::input_iterator_tag,
-			typename std::iterator_traits<Iterator>::iterator_category>())
-	> static std::true_type is_iteratable(const T&);
-};
-template<typename T> constexpr bool is_iteratable() {
-	return decltype(is_iteratable_helper::is_iteratable(std::declval<T>()))::value;
-}
-
-// pair
-template<typename T              > struct is_pair_helper                    : std::false_type {};
-template<typename T1, typename T2> struct is_pair_helper<std::pair<T1, T2>> : std::true_type {};
-template<typename T> constexpr bool is_pair() {
-	return is_pair_helper<T>::value;
-}
-
-// tuple
-template<typename   T> struct is_tuple_helper                   : std::false_type {};
-template<typename...T> struct is_tuple_helper<std::tuple<T...>> : std::true_type {};
-template<typename T> constexpr bool is_tuple() {
-	return is_tuple_helper<T>::value;
-}
-
-// streamable
-struct is_streamable_helper {
-	static std::false_type is_streamable(...);
-	
-	template<typename T,
-		YOGA_REQUIRE_N(streamable, is_base_or_same<std::ostream,
-				decay<decltype(std::declval<std::ostream&>() << std::declval<const T&>())>>())
-	>
-	static std::true_type is_streamable(const T&);
-	
-};
-template<typename T> constexpr bool is_streamable() {
-	return decltype(is_streamable_helper::is_streamable(std::declval<T>()))::value;
-}
-
 
 // And now: implement the actual printing:
 //////////////////////////////////////////
@@ -247,36 +153,7 @@ template<typename T> void print_to_stream_tagged(std::ostream& stream, const T& 
 
 } // namespace impl
 
-// Finally: put together the public interface:
-//////////////////////////////////////////////
-
-template<typename...T>
-std::string to_string(const T&...args) {
-	std::stringstream stream;
-	print_to_stream(stream, args...);
-	return stream.str();
-}
-
-template<typename...T>
-std::ostream& print_to_stream(std::ostream& stream, const T&...args) {
-	impl::print_to_stream(stream, args...);
-	return stream;
-}
-
-template<typename...T>
-std::string format(const std::string& format, const T&...args) {
-	std::stringstream stream;
-	print_to_stream_formated(stream, format, args...);
-	return stream.str();
-}
-
-template<typename...T>
-std::ostream& print_to_stream_formated(std::ostream& stream, const std::string& format, const T&...args) {
-	impl::print_to_stream_formated(stream, format.begin(), format.end(), args...);
-	return stream;
-}
-
-} //namespace Aux
+} //namespace yoga
 
 
 #endif

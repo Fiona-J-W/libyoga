@@ -25,6 +25,23 @@ void enforce_opened(const Stream& stream, const std::string& filename) {
 	enforce(stream.is_open(), "Could not open “" + filename + "”");
 }
 
+namespace checkers {
+
+struct enforcer {
+	static void enforce(bool b) {
+		::yoga::enforce(b, "runtime_error");
+	}
+};
+
+struct asserter {
+	static void enforce(bool b) {
+		(void) b; // needed to prevent warnings in release-builds
+		assert(b);
+	}
+};
+
+}
+
 } // namespace util
 
 #endif
