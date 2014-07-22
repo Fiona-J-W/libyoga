@@ -9,4 +9,7 @@
 
 
 int main() {
+	yoga::debug_printer printer;
+	yoga::impl::format(printer, "foo{}bar{}baz{}", "bla", "blub", "meow");
+	printer.flush();
 }

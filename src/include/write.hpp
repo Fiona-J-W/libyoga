@@ -13,10 +13,12 @@
 #include <string>
 
 #include "pointer.hpp"
+#include "enforce.hpp"
 
 namespace yoga {
 
 struct format {
+	char brace = '\0'; // '{' or '}' are the reasonable alternatives
 	bool explicit_index = false;
 	unsigned index = 0;
 };
@@ -63,7 +65,7 @@ public:
 		auto output = get_writeable_range();
 		auto output_size = std::distance(output.first, output.second);
 		while (input_size > output_size) {
-			std::copy_n(it, output_size, output.first);
+			buffer_begin = std::copy_n(it, output_size, output.first);
 			input_size -= output_size;
 			it += output_size;
 			output = flush();
@@ -71,6 +73,12 @@ public:
 		}
 		std::copy_n(it, input_size, output.first);
 		set_written_until(output.first + input_size);
+	}
+
+	void write_char(char c) {
+		*buffer_begin = c;
+		++buffer_begin;
+		flush();
 	}
 
 private:
@@ -141,12 +149,34 @@ void format(Output& output, const String& str, const Args&... args) {
 		{ make_unique_printer(output, args)... }
 	};
 
-	std::size_t index = 0;
+	std::size_t index_counter = 0;
 	using std::begin;
 	using std::end;
-	output.write_range(begin(str), end(str));
-	for (auto&& printer : printers) {
-		printer->print({});
+	auto it = begin(str);
+	const auto str_end = end(str);
+	while (it != str_end) {
+		auto it2 = std::find(it, str_end, '{');
+		output.write_range(it, it2);
+		if (it2 == str_end) {
+			break;
+		}
+		it = it2;
+		it2 = std::find(it, str_end, '}');
+		yoga::enforce(it2 != str_end, "invalid formatstring:" + std::string{str});
+		++it2;
+		auto f = parse_format(it, it2);
+		it = it2;
+		if (f.brace != '\0') {
+			output.write_char(f.brace);
+			continue;
+		}
+		std::size_t index;
+		if (f.explicit_index) {
+			index = f.index;
+		} else {
+			index = index_counter++;
+		}
+		printers.at(index)->print(f);
 	}
 }
 
