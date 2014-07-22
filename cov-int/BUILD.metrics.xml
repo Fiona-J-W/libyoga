@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE coverity SYSTEM "config.dtd">
+<coverity>
+
+<metrics>
+    <metric>
+        <name>time</name>
+        <value>3</value>
+    </metric>
+    <metric>
+        <name>args</name>
+        <value>/home/florian/entwicklung/build/coverity/cov-analysis-linux64-7.0.2/bin/cov-build --dir cov-int</value>
+    </metric>
+    <metric>
+        <name>host</name>
+        <value>terra</value>
+    </metric>
+    <metric>
+        <name>short-platform</name>
+        <value>linux64</value>
+    </metric>
+    <metric>
+        <name>platform</name>
+        <value>Linux 3.14.4-1-ARCH x86_64</value>
+    </metric>
+    <metric>
+        <name>ident</name>
+        <value>7.0.2 (build 8c35bb7bf8 p-fresno-push-17316.501)</value>
+    </metric>
+    <metric>
+        <name>user</name>
+        <value>florian</value>
+    </metric>
+    <metric>
+        <name>cwd</name>
+        <value>/home/florian/entwicklung/c++/yoga</value>
+    </metric>
+    <metric>
+        <name>config</name>
+        <value>/home/florian/entwicklung/build/coverity/cov-analysis-linux64-7.0.2/config/coverity_config.xml</value>
+    </metric>
+    <metric>
+        <name>intermediatedir</name>
+        <value>/home/florian/entwicklung/c++/yoga/cov-int</value>
+    </metric>
+    <metric>
+        <name>outputdir</name>
+        <value>/home/florian/entwicklung/c++/yoga/cov-int/output</value>
+    </metric>
+    <metric>
+        <name>emitdir</name>
+        <value>/home/florian/entwicklung/c++/yoga/cov-int/emit</value>
+    </metric>
+    <metric>
+        <name>force</name>
+        <value>no</value>
+    </metric>
+    <metric>
+        <name>cygwin</name>
+        <value>no</value>
+    </metric>
+    <metric>
+        <name>failures</name>
+        <value>1</value>
+    </metric>
+    <metric>
+        <name>successes</name>
+        <value>0</value>
+    </metric>
+    <metric>
+        <name>buildcmd</name>
+        <value>make</value>
+    </metric>
+</metrics>
+</coverity>
