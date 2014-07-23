@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <cassert>
 #include <iterator>
+#include <cstring>
 
 #include <iostream> // for debugging
 #include <string>
@@ -31,6 +32,10 @@ struct format {
 	char range_opener = '[';
 	char range_closer = ']';
 	std::string range_seperator = ", ";
+	unsigned base = 10;
+	char style = 's'; // s = graphical, further, implementation-defined formats are possible
+	unsigned min_length = 0; // the minimum digits for a number
+	char fill = ' '; // the symbol used to fill up a number-string
 };
 
 class debug_printer {
@@ -53,46 +58,37 @@ public:
 		return *this;
 	}
 
-	auto flush() {
+	void flush() {
 		std::cout << std::string{ buffer.begin(), buffer_begin } << std::flush;
 		buffer_begin = buffer.begin();
-		return std::make_pair(buffer_begin, buffer.end());
 	}
 
 	~debug_printer() {
 		flush();
 	}
 	
-	auto get_writeable_range() { return std::make_pair(buffer_begin, buffer.end()); }
-
-	auto set_written_until(buffer_t::iterator new_end) {
-		buffer_begin = new_end;
-		if (new_end == buffer.end()) {
-			flush();
-		}
-	}
-
 	template <typename Iterator>
 	void write_range(Iterator input_start, Iterator input_end) {
 		auto it = input_start;
 		auto input_size = std::distance(it, input_end);
-		auto output = get_writeable_range();
-		auto output_size = std::distance(output.first, output.second);
+		auto output_size = std::distance(buffer_begin, buffer.end());
 		while (input_size > output_size) {
-			buffer_begin = std::copy_n(it, output_size, output.first);
+			buffer_begin = std::copy_n(it, output_size, buffer_begin);
 			input_size -= output_size;
 			it += output_size;
-			output = flush();
-			output_size = std::distance(output.first, output.second);
+			flush();
+			output_size = std::distance(buffer_begin, buffer.end());
 		}
-		std::copy_n(it, input_size, output.first);
-		set_written_until(output.first + input_size);
+		std::copy_n(it, input_size, buffer_begin);
+		buffer_begin += input_size;
 	}
 
 	void write_char(char c) {
 		*buffer_begin = c;
 		++buffer_begin;
-		flush();
+		if (buffer_begin == buffer.end()) {
+			flush();
+		}
 	}
 
 private:
@@ -121,11 +117,13 @@ enum class printable_category {
 	// TODO: the native handle
 	pair,
 	tuple,
+	integer,
 	char_range,
 	streamable,
 	iteratable
 };
 
+template<typename T> constexpr bool is_integer();
 template<typename T> constexpr bool is_streamable();
 template<typename T> constexpr bool is_pair();
 template<typename T> constexpr bool is_tuple();
@@ -138,6 +136,7 @@ constexpr printable_category get_printable_category();
 template<printable_category Tag> struct printable_category_tag{};
 using pair_tag         = printable_category_tag< printable_category::pair        >;
 using tuple_tag        = printable_category_tag< printable_category::tuple       >;
+using integer_tag      = printable_category_tag< printable_category::integer     >;
 using iteratable_tag   = printable_category_tag< printable_category::iteratable  >;
 using char_range_tag   = printable_category_tag< printable_category::char_range  >;
 using streamable_tag   = printable_category_tag< printable_category::streamable  >;
@@ -149,6 +148,9 @@ void print(Output& output, const Value& value, const ::yoga::format&);
 
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const ::yoga::format&, pair_tag);
+
+template <typename Output, typename Value>
+void print(Output& output, Value value, const ::yoga::format&, integer_tag);
 
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const ::yoga::format&, tuple_tag);
@@ -267,6 +269,40 @@ void print(Output& output, const Value& value, const struct format& f) {
 	print(output, value, f, printable_category_tag<get_printable_category<Value>()>{});
 }
 
+template <typename Output, typename Value>
+void print(Output& output, Value value, const ::yoga::format& f, integer_tag) {
+	if (value < 0) {
+		output.write_char('-');
+		value = -value;
+		// TODO: handle the minimal value
+	}
+	// prepare for all bases, including 2:
+	std::array<char, sizeof(Value) * 8> arr;
+	assert(8 * sizeof(Value) >= f.min_length); // TODO: remove this restriction
+	auto it = arr.begin();
+	while (value != 0) {
+		auto d = value%f.base;
+		value /= f.base;
+		if (d < 10) {
+			*it = d + '0';
+		} else {
+			*it = (d-10) + 'a';
+		}
+		++it;
+	}
+	if (it == arr.begin()) {
+		*it = '0';
+		++it;
+	}
+	auto written_bytes = std::distance(arr.begin(), it);
+	if (written_bytes < f.min_length) {
+		std::memset(arr.data() + written_bytes, f.fill, f.min_length - written_bytes);
+		it += f.min_length - written_bytes;
+	}
+	auto test = std::string{"some integer"};
+	using r_iterator = decltype(arr.rbegin());
+	output.write_range(r_iterator{it}, arr.rend());
+}
 
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const ::yoga::format& f, pair_tag) {
@@ -306,10 +342,24 @@ constexpr printable_category get_printable_category() {
 	return
 		is_pair<T>()       ? printable_category::pair        :
 		is_tuple<T>()      ? printable_category::tuple       :
+		is_integer<T>()    ? printable_category::integer     :
 		is_char_range<T>() ? printable_category::char_range  :
 		is_streamable<T>() ? printable_category::streamable  :
 		is_iteratable<T>() ? printable_category::iteratable  :
 		/* else: */          printable_category::unprintable ;
+}
+
+
+// integer (the real ones, not the stuff like bool and characters)
+template<typename T> constexpr bool is_integer() {
+	using Arg = std::decay_t<T>;
+	return std::is_integral<Arg>:: value && !(
+		std::is_same<Arg, bool>::value ||
+		std::is_same<Arg, char>::value ||
+		std::is_same<Arg, wchar_t>::value ||
+		std::is_same<Arg, char16_t>::value ||
+		std::is_same<Arg, char32_t>::value
+	);
 }
 
 // iteratable
@@ -337,7 +387,7 @@ struct is_char_range_helper {
 	> static std::true_type is_char_range(const T&);
 
 	// this is a hack, because for some reason the above is_iterateable doesn't work with build-in arrays
-	static std::true_type is_char_range(const char*);
+	static std::true_type is_char_range(const char[]);
 };
 template<typename T> constexpr bool is_char_range() {
 	return decltype(is_char_range_helper::is_char_range(std::declval<T>()))::value;

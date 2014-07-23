@@ -24,20 +24,20 @@ std::tuple<CharIterator, char> drop_spaces(CharIterator it, CharIterator end);
 template <typename Integer>
 double power_of_10(Integer exp);
 
-class integer_tag {};
+class integer_tag_parser{};
 
 template <typename Integer, typename CharIterator, typename ValidationPolicy>
-std::tuple<Integer, CharIterator> str_to(CharIterator it, CharIterator end, integer_tag);
+std::tuple<Integer, CharIterator> str_to(CharIterator it, CharIterator end, integer_tag_parser);
 
-class real_tag {};
+class real_tag_parser{};
 
 template <typename Real, typename CharIterator, typename ValidationPolicy>
-std::tuple<Real, CharIterator> str_to(CharIterator it, CharIterator end, real_tag);
+std::tuple<Real, CharIterator> str_to(CharIterator it, CharIterator end, real_tag_parser);
 
 template <typename T>
 using ArithmeticTag = typename std::conditional<
-    std::is_integral<T>::value, integer_tag,
-    typename std::conditional<std::is_floating_point<T>::value, real_tag, void>::type>::type;
+    std::is_integral<T>::value, integer_tag_parser,
+    typename std::conditional<std::is_floating_point<T>::value, real_tag_parser, void>::type>::type;
 
 } // namespace impl
 
@@ -67,7 +67,7 @@ std::tuple<Number, CharIterator> str_to(CharIterator it, CharIterator end) {
 namespace impl {
 
 template <typename Integer, typename CharIterator, typename ValidationPolicy>
-std::tuple<Integer, CharIterator> str_to(CharIterator it, const CharIterator end, integer_tag) {
+std::tuple<Integer, CharIterator> str_to(CharIterator it, const CharIterator end, integer_tag_parser) {
 	using impl::drop_spaces;
 	ValidationPolicy::enforce(it != end);
 
@@ -129,7 +129,7 @@ std::tuple<Integer, CharIterator> str_to(CharIterator it, const CharIterator end
 }
 
 template <typename Real, typename CharIterator, typename ValidationPolicy>
-std::tuple<Real, CharIterator> str_to(CharIterator it, const CharIterator end, real_tag) {
+std::tuple<Real, CharIterator> str_to(CharIterator it, const CharIterator end, real_tag_parser) {
 
 	static_assert(std::numeric_limits<Real>::max_digits10 <=
 	                  std::numeric_limits<std::uintmax_t>::digits10,
@@ -245,10 +245,10 @@ std::tuple<Real, CharIterator> str_to(CharIterator it, const CharIterator end, r
 	if (c == 'e' || c == 'E') {
 		++it;
 		int tmp;
-		// we need to pass integer_tag explicitly here because we are in a
+		// we need to pass integer_tag_parser explicitly here because we are in a
 		// nested namespace. This shouldn't be required anywhere else
 		std::tie(tmp, it) =
-		    str_to<int, CharIterator, ValidationPolicy>(it, end, integer_tag{});
+		    str_to<int, CharIterator, ValidationPolicy>(it, end, integer_tag_parser{});
 		exp += tmp;
 	}
 
