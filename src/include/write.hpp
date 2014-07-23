@@ -271,15 +271,15 @@ void print(Output& output, const Value& value, const struct format& f) {
 
 template <typename Output, typename Value>
 void print(Output& output, Value value, const ::yoga::format& f, integer_tag) {
-	if (value < 0) {
-		output.write_char('-');
-		value = -value;
-		// TODO: handle the minimal value
-	}
 	// prepare for all bases, including 2:
-	std::array<char, sizeof(Value) * 8> arr;
-	assert(8 * sizeof(Value) >= f.min_length); // TODO: remove this restriction
+	std::array<char, sizeof(Value) * 8 + std::is_signed<Value>::value> arr;
+	assert(arr.size() >= f.min_length); // TODO: remove this restriction
 	auto it = arr.begin();
+	bool print_minus = false;
+	if (value < 0) {
+		print_minus = true;
+		value = -value; // TODO: allow int-min
+	}
 	while (value != 0) {
 		auto d = value%f.base;
 		value /= f.base;
@@ -298,6 +298,12 @@ void print(Output& output, Value value, const ::yoga::format& f, integer_tag) {
 	if (written_bytes < f.min_length) {
 		std::memset(arr.data() + written_bytes, f.fill, f.min_length - written_bytes);
 		it += f.min_length - written_bytes;
+		if(print_minus) {
+			*it = '-';
+		}
+	} else if (print_minus) {
+		*it = '-';
+		++it;
 	}
 	auto test = std::string{"some integer"};
 	using r_iterator = decltype(arr.rbegin());
