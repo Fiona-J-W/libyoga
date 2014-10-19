@@ -89,31 +89,43 @@ private:
 template<typename Number, Number Step = 1>
 class fixed_number_range {
 public:
-	fixed_number_range(Number low, Number high): low{low}, high{high} {
+	fixed_number_range(Number low, Number high): m_low{low}, m_high{high} {
 		auto offset_high = high % Step;
 		auto offset_low = low % Step;
 		if (offset_low != offset_high) {
-			this->high += -offset_high + offset_low;
+			m_high += -offset_high + offset_low;
 			if (offset_high > offset_low) {
-				this->high += Step;
+				m_high += Step;
 			}
 		}
 	}
 	fixed_number_iterator<Number, Step> begin() const {
-		return {low};
+		return {m_low};
 	}
 	fixed_number_iterator<Number, Step> end() const {
-		return {high};
+		return {m_high};
+	}
+	
+	constexpr Number low() const {return m_low;}
+	constexpr Number high() const {return m_high;}
+	constexpr Number step() const {return Step;}
+	
+	constexpr std::size_t size() const {
+		return (m_high - m_low) / Step;
 	}
 private:
-	Number low;
-	Number high;
+	Number m_low;
+	Number m_high;
 };
 
 template<typename Number, Number Step = 1>
-fixed_number_range<Number, Step> make_number_range(Number low, Number high) {
+fixed_number_range<Number, Step> make_fixed_number_range(Number low, Number high) {
 	return {low, high};
 }
+
+
+/////////////////////////////
+
 
 template<typename Number>
 class number_iterator {
@@ -200,32 +212,62 @@ private:
 template<typename Number>
 class number_range {
 public:
-	number_range(Number low, Number high, Number step): low{low}, high{high}, step{step} {
-		auto offset_high = high % step;
-		auto offset_low = low % step;
+	number_range(Number low, Number high, Number step): m_low{low}, m_high{high}, m_step{step} {
+		auto offset_high = m_high % m_step;
+		auto offset_low = m_low % m_step;
 		if (offset_low != offset_high) {
-			this->high += -offset_high + offset_low;
+			m_high += -offset_high + offset_low;
 			if (offset_high > offset_low) {
-				this->high += step;
+				m_high += m_step;
 			}
 		}
 	}
+	template<Number Step>
+	number_range(const fixed_number_range& other): m_low{other.m_low()}, m_high{other.m_high()}, m_step{other.m_step()} {}
 	number_iterator<Number> begin() const {
-		return {low, step};
+		return {m_low, m_step};
 	}
 	number_iterator<Number> end() const {
-		return {high, step};
+		return {m_high, m_step};
 	}
+	
+	constexpr Number low() const {return m_low;}
+	constexpr Number high() const {return m_high;}
+	constexpr Number step() const {return m_step;}
+	
+	constexpr std::size_t size() const {
+		return (m_high - m_low) / m_step;
+	}
+	
 private:
-	Number low;
-	Number high;
-	Number step;
+	Number m_low;
+	Number m_high;
+	Number m_step;
 };
+
+
 
 template<typename Number>
 number_range<Number> make_number_range(Number low, Number high, Number step) {
 	return {low, high, step};
 }
+
+
+///////////////////////
+
+template<typename Number>
+fixed_number_range<Number, 1> range(Number high) {
+	return make_fixed_number_range<Number, 1>(Number{0}, high);
+}
+
+template<typename Number>
+fixed_number_range<Number, 1> range(Number low, Number high) {
+	return make_fixed_number_range<Number, 1>(low, high);
+}
+
+template<typename Number>
+number_range<Number> range(Number low, Number high, Number step) {
+	return make_number_range(low, high, step);
 
 } // namespace yoga
 
