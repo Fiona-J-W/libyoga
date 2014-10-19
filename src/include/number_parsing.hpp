@@ -1,5 +1,5 @@
-#ifndef YOGA_NUMBER_PARSING_H
-#define YOGA_NUMBER_PARSING_H
+#ifndef YOGA_NUMBER_PARSING_HPP
+#define YOGA_NUMBER_PARSING_HPP
 
 #include <algorithm>
 #include <cassert>
