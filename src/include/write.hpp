@@ -11,6 +11,7 @@
 #include <cassert>
 #include <iterator>
 #include <cstring>
+#include <strstream>
 
 #include <iostream> // for debugging
 #include <string>
@@ -19,24 +20,9 @@
 #include "enforce.hpp"
 #include "number_parsing.hpp"
 #include "tmp.hpp"
+#include "fmt.hpp"
 
 namespace yoga {
-
-struct format {
-	char brace = '\0'; // '{' or '}' are the reasonable alternatives
-	bool explicit_index = false;
-	unsigned index = 0;
-	char tuple_opener = '(';
-	char tuple_closer = ')';
-	std::string tuple_seperator = ", ";
-	char range_opener = '[';
-	char range_closer = ']';
-	std::string range_seperator = ", ";
-	unsigned base = 10;
-	char style = 's'; // s = graphical, further, implementation-defined formats are possible
-	unsigned min_length = 0; // the minimum digits for a number
-	char fill = ' '; // the symbol used to fill up a number-string
-};
 
 class debug_printer {
 public:
@@ -68,7 +54,7 @@ public:
 	}
 	
 	template <typename Iterator>
-	void write_range(Iterator input_start, Iterator input_end) {
+	void write(Iterator input_start, Iterator input_end) {
 		auto it = input_start;
 		auto input_size = std::distance(it, input_end);
 		auto output_size = std::distance(buffer_begin, buffer.end());
@@ -83,12 +69,17 @@ public:
 		buffer_begin += input_size;
 	}
 
-	void write_char(char c) {
+	void write(char c) {
 		*buffer_begin = c;
 		++buffer_begin;
 		if (buffer_begin == buffer.end()) {
 			flush();
 		}
+	}
+
+	template<unsigned N>
+	void write(char str[N]) {
+		write(str, str + N);
 	}
 
 private:
@@ -144,61 +135,37 @@ using unprintable_tag  = printable_category_tag< printable_category::unprintable
 
 
 template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format&);
+void print(Output& output, const Value& value, const impl::print_format&);
 
 template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format&, pair_tag);
+void print(Output& output, const Value& value, const impl::print_format&, pair_tag);
 
 template <typename Output, typename Value>
-void print(Output& output, Value value, const ::yoga::format&, integer_tag);
+void print(Output& output, Value value,        const impl::print_format&, integer_tag);
 
 template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format&, tuple_tag);
+void print(Output& output, const Value& value, const impl::print_format&, tuple_tag);
 
 template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format&, char_range_tag);
+void print(Output& output, const Value& value, const impl::print_format&, char_range_tag);
 
 template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format&, iteratable_tag);
+void print(Output& output, const Value& value, const impl::print_format&, iteratable_tag);
 
 template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format&, streamable_tag);
+void print(Output& output, const Value& value, const impl::print_format&, streamable_tag);
 
 
 
 
 ///////////////////////////////////////////////////////////////////////
 
-template <typename Iterator>
-struct format parse_format(Iterator begin, Iterator end) {
-	if(std::distance(begin, end) == 2) {
-		assert(std::string(begin, end) == "{}");
-		return {};
-	}
-	assert(std::distance(begin, end) > 2);
-	--end;
-	assert(*end == '}');
-	assert(*begin == '{');
-	auto it = begin;
-	++it;
-	struct format returnval;
-	if (std::isdigit(*it)) {
-		unsigned index;
-		std::tie(index, it) = ::yoga::str_to<unsigned>(it, end);
-		returnval.index = index;
-		returnval.explicit_index = true;
-	}
-	// TODO: accept further formatting
-	return returnval;
-}
-
 // definitions:
-
 template <typename Output>
 class basic_printer {
 public:
 	virtual ~basic_printer() = default;
-	virtual void print(const struct format&) const = 0;
+	virtual void print() const = 0;
 
 protected:
 	basic_printer(Output& output) : output{ output } {}
@@ -211,8 +178,21 @@ class printer final : public basic_printer<Output> {
 public:
 	printer(Output& output, const Value& value)
 	    : basic_printer<Output>{ output }, value{ value } {}
-	void print(const struct format& f) const override final {
-		yoga::impl::print(*(this->output), *value, f);
+	void print() const override final {
+		yoga::impl::print(*(this->output), *value, {});
+	}
+
+private:
+	reference<const Value> value;
+};
+
+template <typename Output, typename Value>
+class printer<Output, impl::format_pair<Value>> final : public basic_printer<Output> {
+public:
+	printer(Output& output, const Value& value)
+	    : basic_printer<Output>{ output }, value{ value } {}
+	void print() const override final {
+		yoga::impl::print(*(this->output), value->value, value->format);
 	}
 
 private:
@@ -236,28 +216,8 @@ void format(Output& output, const String& str, const Args&... args) {
 	auto it = begin(str);
 	const auto str_end = end(str);
 	while (it != str_end) {
-		auto it2 = std::find(it, str_end, '{');
-		output.write_range(it, it2);
-		if (it2 == str_end) {
-			break;
-		}
-		it = it2;
-		it2 = std::find(it, str_end, '}');
-		yoga::enforce(it2 != str_end, "invalid formatstring:" + std::string{str});
-		++it2;
-		auto f = parse_format(it, it2);
-		it = it2;
-		if (f.brace != '\0') {
-			output.write_char(f.brace);
-			continue;
-		}
-		std::size_t index;
-		if (f.explicit_index) {
-			index = f.index;
-		} else {
-			index = index_counter++;
-		}
-		printers.at(index)->print(f);
+		// TODO
+		printers.at(index)->print();
 	}
 }
 
@@ -269,11 +229,12 @@ void print(Output& output, const Value& value, const struct format& f) {
 	print(output, value, f, printable_category_tag<get_printable_category<Value>()>{});
 }
 
+// Integer
 template <typename Output, typename Value>
-void print(Output& output, Value value, const ::yoga::format& f, integer_tag) {
+void print(Output& output, Value value, const impl::print_format& f, integer_tag) {
 	// prepare for all bases, including 2:
 	std::array<char, sizeof(Value) * 8 + std::is_signed<Value>::value> arr;
-	assert(arr.size() >= f.min_length); // TODO: remove this restriction
+	assert(arr.size() >= f.width()); // TODO: remove this restriction
 	auto it = arr.begin();
 	bool print_minus = false;
 	if (value < 0) {
@@ -281,8 +242,8 @@ void print(Output& output, Value value, const ::yoga::format& f, integer_tag) {
 		value = -value; // TODO: allow int-min
 	}
 	while (value != 0) {
-		auto d = value%f.base;
-		value /= f.base;
+		auto d = value%f.base();
+		value /= f.base();
 		if (d < 10) {
 			*it = d + '0';
 		} else {
@@ -295,9 +256,9 @@ void print(Output& output, Value value, const ::yoga::format& f, integer_tag) {
 		++it;
 	}
 	auto written_bytes = std::distance(arr.begin(), it);
-	if (written_bytes < f.min_length) {
-		std::memset(arr.data() + written_bytes, f.fill, f.min_length - written_bytes);
-		it += f.min_length - written_bytes;
+	if (written_bytes < f.width()) {
+		std::memset(arr.data() + written_bytes, f.fill(), f.width() - written_bytes);
+		it += f.width() - written_bytes;
 		if(print_minus) {
 			*it = '-';
 		}
@@ -307,33 +268,83 @@ void print(Output& output, Value value, const ::yoga::format& f, integer_tag) {
 	}
 	auto test = std::string{"some integer"};
 	using r_iterator = decltype(arr.rbegin());
-	output.write_range(r_iterator{it}, arr.rend());
+	output.write(r_iterator{it}, arr.rend());
 }
 
+
+// Pair
 template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format& f, pair_tag) {
-	output.write_char(f.tuple_opener);
+void print(Output& output, const Value& value, const impl::print_format& f, pair_tag) {
+	
+	output.write('(');
 	print(output, value.first, f);
-	output.write_range(f.tuple_seperator.begin(), f.tuple_seperator.end());
+	output.write(", ");
 	print(output, value.second, f);
-	output.write_char(f.tuple_closer);
+	output.write(')');
 }
 
-template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format& f, tuple_tag);
 
+// Tuple
+template<typename Tuple, int I, int tupleSize> struct printtuple_helper {
+	template<typename Output>
+	static void print(Output& output, const Tuple& arg, const print_format& f) {
+		print(output, std::get<I-1>(arg), f);
+		output.write(", ");
+		printtuple_helper<Tuple, I+1, tupleSize>::print(output, arg, f);
+	}
+};
+template<typename Tuple, int I> struct printtuple_helper<Tuple, I, I>{
+	template<typename Output>
+	static void print(Output& output, const Tuple& arg, const print_format& f) {
+		print(output, std::get<I-1>(arg), f);
+	}
+};
 template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format&, char_range_tag) {
+void print(Output& output, const Value& value, const print_format& f, tuple_tag) {
+	output.write('(');
+	impl::printtuple_helper<Value, 1, std::tuple_size<Value>::value>::print(output, value, f);
+	output.write(')');
+}
+
+
+// char-Range
+template <typename Output, typename Value>
+void print(Output& output, const Value& value, const print_format&, char_range_tag) {
 	using std::begin;
 	using std::end;
-	output.write_range(begin(value), end(value));
+	output.write(begin(value), end(value));
 }
 
-template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format& f, iteratable_tag);
 
+// Range
 template <typename Output, typename Value>
-void print(Output& output, const Value& value, const ::yoga::format& f, streamable_tag);
+void print(Output& output, const Value& value, const impl::print_format& f, iteratable_tag) {
+	auto it = std::begin(value);
+	auto end = std::end(value);
+	if (it == end) {
+		output.write("[]");
+		return;
+	}
+	output.write('[');
+	print(output, *it, f);
+	++it;
+	while (it != end) {
+		output.write(", ");
+		print(output, *it, f);
+		++it;
+	}
+	output.write(']');
+}
+
+
+// Streamable
+template <typename Output, typename Value>
+void print(Output& output, const Value& value, const impl::print_format&, streamable_tag) {
+	std::ostringstream stream;
+	stream << value;
+	auto str = stream.str();
+	output.write(str.begin(), str.end());
+}
 
 
 
