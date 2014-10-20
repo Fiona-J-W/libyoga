@@ -1,159 +1,80 @@
-#ifndef YOGA_FORMAT_HPP
-#define YOGA_FORMAT_HPP
 
-#include <algorithm>
-#include <cassert>
+#ifndef YOGA_FMT_HPP
+#define YOGA_FMT_HPP
+
 #include <string>
-#include <sstream>
-#include <stdexcept>
-#include <iterator>
-#include <type_traits>
-#include <tuple>
-#include <utility>
+#include <cstdint>
 
 namespace yoga {
 
+namespace format {
+	struct width{unsigned value;};
+	struct precission{unsigned value;};
+	struct fill{char value;};
+	struct base{unsigned value;};
+} // namespace format
+
+inline namespace literals {
+inline namespace format_literals {
+
+constexpr format::width      operator"" _w(unsigned long long arg) {return {static_cast<unsigned>(arg)};}
+constexpr format::precission operator"" _p(unsigned long long arg) {return {static_cast<unsigned>(arg)};}
+constexpr format::fill       operator"" _f(char c)                 {return {c};}
+constexpr format::base    operator"" _base(unsigned long long arg) {return {static_cast<unsigned>(arg)};}
+
+} // namespace format_literals
+} // namespace literals
+
 namespace impl {
 
+class print_format {
+public:
+	template<typename...Args>
+	print_format(const Args&... args) {ignore(set(args)...);}
 
+	auto width() const {return m_width.value;}
+	auto precission() const {return m_precission.value;}
+	auto fill() const {return m_fill.value;}
+	auto base() const {return m_base.value;}
 
-template<typename Output, typename> void print( const T&,);
-inline void print_to_stream(std::ostream&) {}
+private:
+	format::width m_width = {0};
+	format::precission m_precission = {0};
+	format::fill m_fill = {' '};
+	format::base m_base = {10};
 
-template<typename T> void print_to_stream_tagged(std::ostream& stream, const T&, iteratable_tag);
-template<typename T> void print_to_stream_tagged(std::ostream& stream, const T&, pair_tag);
-template<typename T> void print_to_stream_tagged(std::ostream& stream, const T&, tuple_tag);
-template<typename T> void print_to_stream_tagged(std::ostream& stream, const T&, streamable_tag);
+	// utility to be able to use parameter-pack expansion
+	// to set all values instead of ugly recursive hacks.
+	// this is also the reason why all setters have to return a value
+	template<typename...T> void ignore(T...){}
 
-// Claim that this function exists somewhere else to keep the errors clean
-// (calling this function is not a problem since the error is already caught earlier
-// in print_to_stream, and calling it directly will result in a linker-error)
-template<typename T> extern void print_to_stream_tagged(std::ostream& , const T&, unprintable_tag);
-
-template<typename T, typename...Args>
-void print_to_stream(std::ostream& stream, const T& arg, const Args&...args) {
-	static_assert(getprintable_category<T>() != printable_category::unprintable,
-			"print_to_stream must not be called with an unprintable argument");
-	print_to_stream_tagged(stream, arg, printable_category_tag<getprintable_category<T>()>{});
-	print_to_stream(stream, args...);
-}
-
-inline std::tuple<std::string::const_iterator, bool> printFormatPartToStream(std::ostream& stream,
-		std::string::const_iterator begin, std::string::const_iterator end);
-
-inline void print_to_stream_formated(std::ostream& stream, std::string::const_iterator format_begin,
-		std::string::const_iterator format_end) {
-	bool print_argument;
-	using iterator = std::string::const_iterator;
-	iterator it;
-	std::tie(it, print_argument) = printFormatPartToStream(stream, format_begin, format_end);
-	if (print_argument) {
-		throw std::invalid_argument{"formatstring requests more arguments then provided"};
-	}
-}
-template<typename T, typename...Args>
-void print_to_stream_formated(std::ostream& stream, std::string::const_iterator format_begin,
-		std::string::const_iterator format_end, const T& arg, const Args&...args) {
-	bool print_argument;
-	using iterator = std::string::const_iterator;
-	iterator it;
-	std::tie(it, print_argument) = printFormatPartToStream(stream, format_begin, format_end);
-	if(print_argument) {
-		print_to_stream(stream, arg);
-		print_to_stream_formated(stream, it, format_end, args...);
-	} else {
-		assert(it == format_end);
-		return;
-	}
-}
-
-inline std::tuple<std::string::const_iterator, bool> printFormatPartToStream(std::ostream& stream,
-		std::string::const_iterator begin, std::string::const_iterator end) {
-	if (begin == end) {
-		return std::make_tuple(end, false);
-	}
-	while (true) {
-		auto nextPercent = std::find(begin, end, '%');
-		stream.write(&*begin, nextPercent-begin);
-		if(nextPercent == end) {
-			return std::make_tuple(end, false);
-		} else {
-			begin = ++nextPercent;
-			if(begin == end) {
-				throw std::invalid_argument{"formatstrings must not end on unmatched '%'"};
-			} else if (*begin == '%') {
-				stream.put('%');
-				++begin;
-			} else if (*begin == 's') {
-				++begin;
-				return std::make_tuple(begin, true);
-			} else {
-				throw std::invalid_argument{"formatstring contains illegal format-specifier"};
-			}
-		}
-	}
-}
-
-
-// And now: implement the actual printing:
-//////////////////////////////////////////
-
-// streamable
-template<typename T> void print_to_stream_tagged(std::ostream& stream, const T& arg, streamable_tag) {
-	stream << arg;
-}
-
-// pair
-template<typename T> void print_to_stream_tagged(std::ostream& stream, const T& arg, pair_tag) {
-	stream << '(';
-	print_to_stream(stream, arg.first);
-	stream << ", ";
-	print_to_stream(stream, arg.second);
-	stream << ')';
-}
-
-// tuple
-template<typename tuple, int I, int tupleSize> struct printtuple_helper {
-	static void print(std::ostream& stream, const tuple& arg) {
-		print_to_stream(stream, std::get<I-1>(arg));
-		stream << ", ";
-		printtuple_helper<tuple, I+1, tupleSize>::print(stream, arg);
-	}
+	auto set(format::width width) {return m_width = width;}
+	auto set(format::precission precission) {return m_precission = precission;}
+	auto set(format::fill fill) {return m_fill = fill;}
+	auto set(format::base base) {return m_base = base;}
 };
-template<typename tuple, int I> struct printtuple_helper<tuple, I, I>{
-	static void print(std::ostream& stream, const tuple& arg) {
-		print_to_stream(stream, std::get<I-1>(arg));
-	}
+
+template<typename T>
+struct format_pair {
+	const T& value;
+	print_format format;
 };
-template<typename T> void print_to_stream_tagged(std::ostream& stream, const T& arg, tuple_tag) {
-	stream << '(';
-	printtuple_helper<T, 1, std::tuple_size<T>::value>::print(stream, arg);
-	stream << ')';
-}
-
-// iteratable
-template<typename T> void print_to_stream_tagged(std::ostream& stream, const T& arg, iteratable_tag) {
-	auto it = std::begin(arg);
-	auto end = std::end(arg);
-	bool firstpass = true;
-	stream << '[';
-	while(it != end) {
-		if(firstpass) {
-			firstpass = false;
-		}
-		else {
-			stream << ", ";
-		}
-		print_to_stream(stream, *it);
-		++it;
-	}
-	stream << ']';
-}
-
 
 } // namespace impl
 
-} //namespace yoga
+template<typename T, typename...Formats>
+impl::format_pair<T> fmt(const T& value, const Formats&... formats) {
+	return {value, print_format(formats...)};
+}
 
+} // namespace yoga
 
-#endif
+#ifdef LOCAL_TESTS
+void testfun() {
+	using namespace yoga::format_literals;
+	auto var = yoga::print_format{37_w, '0'_f, 3_p};
+	auto arg = yoga::fmt(42, 37_w, 3_p);
+}
+#endif // LOCAL_TESTS
+
+#endif // YOGA_FMT_HPP

@@ -20,7 +20,7 @@
 #include "enforce.hpp"
 #include "number_parsing.hpp"
 #include "tmp.hpp"
-#include "fmt.hpp"
+#include "format.hpp"
 
 namespace yoga {
 
@@ -38,11 +38,7 @@ public:
 		buffer_begin = rhs.buffer_begin;
 	}
 
-	debug_printer& operator=(debug_printer&& rhs) {
-		buffer = std::move(rhs.buffer);
-		buffer_begin = rhs.buffer_begin;
-		return *this;
-	}
+	debug_printer& operator=(debug_printer&& rhs) = default;
 
 	void flush() {
 		std::cout << std::string{ buffer.begin(), buffer_begin } << std::flush;
@@ -206,18 +202,51 @@ std::unique_ptr<basic_printer<Output> > make_unique_printer(Output& output, cons
 
 template <typename Output, typename String, typename... Args>
 void format(Output& output, const String& str, const Args&... args) {
-	std::array<std::unique_ptr<basic_printer<Output> >, sizeof...(Args)> printers{
-		{ make_unique_printer(output, args)... }
-	};
+	const auto printers = std::array<std::unique_ptr<basic_printer<Output> >, sizeof...(Args)>{
+		{ make_unique_printer(output, args)... }};
+	const auto splitters = std::array<char, 2>{{'{', '}'}};
+	const auto end = std::end(str);
+	const auto find_next = [&](auto it) {return std::find_first_of(it, end, splitters.begin(), splitters.end());}
 
-	std::size_t index_counter = 0;
-	using std::begin;
-	using std::end;
-	auto it = begin(str);
-	const auto str_end = end(str);
-	while (it != str_end) {
-		// TODO
-		printers.at(index)->print();
+	std::size_t index = 0;
+	auto it1 = std::begin(str);
+	auto it2 = find_next(it1);
+	for(; it2 != end; it2 = find_next(it1)) {
+		output,write(it1, it2);
+		if (it2 == end) {
+			break;
+		}
+		if (*it2 == '}') {
+			++it2;
+			if (it2 == end or *it2 != '}') {
+				throw std::invalid_argument{"invalid formatstring"};
+			}
+			output.write('}');
+			++it2;
+			continue;
+		}
+		assert(*it2 == '{');
+		++it2;
+		if (it2 == end) {
+			throw std::invalid_argument{"invalid formatstring"};
+		}
+		if (*it2 == '{') {
+			output.write('{');
+		} else if (*it2 == '}') {
+			printers.at(index)->print();
+			++index;
+		} else if (std::isdigit(*it2)) {
+			auto index = std::size_t{};
+			std::tie(index, it2) = str_to<std::size_t>(it2, end);
+			if (it2 == end or *it2 != '}') {
+				throw std::invalid_argument{"invalid formatstring"};
+			}
+			printers.at(index)->print();
+		} else {
+			throw std::invalid_argument{"invalid formatstring"};
+		}
+		++it2;
+		it1 = it2;
 	}
 }
 
