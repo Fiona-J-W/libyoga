@@ -64,7 +64,7 @@ struct format_pair {
 
 template<typename T, typename...Formats>
 impl::format_pair<T> fmt(const T& value, const Formats&... formats) {
-	return {value, print_format(formats...)};
+	return {value, impl::print_format(formats...)};
 }
 
 } // namespace yoga

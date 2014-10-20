@@ -7,21 +7,54 @@
 #include <string>
 
 #include "../src/include/yoga.hpp"
-#include "../src/include/number_range.hpp"
+
+class debug_printer: public yoga::printer_base<debug_printer> {
+public:
+	void flush() {
+		std::cout << std::flush;
+	}
+
+	template <typename Iterator>
+	void append(Iterator input_start, Iterator input_end) {
+		std::copy(input_start, input_end, std::ostream_iterator<char>{std::cout});
+	}
+
+	using printer_base::append;
+};
+
+class string_printer: public yoga::printer_base<string_printer> {
+public:
+	using printer_base::flush;
+	using printer_base::append;
+
+	template <typename Iterator>
+	void append(Iterator input_start, Iterator input_end) {
+		std::copy(input_start, input_end, std::back_inserter(m_string));
+	}
+
+	const std::string& str() const& {return m_string;}
+	std::string str() && {return std::move(m_string);}
+
+private:
+	std::string m_string;
+};
 
 
 int main() {
 	using namespace std::literals;
-	yoga::debug_printer printer;
-	yoga::impl::format(printer, "negative-integer: {}\n", -1);
-	yoga::impl::format(printer, "0: {}\n", 0);
-	yoga::impl::format(printer, "0U: {}\n", 0U);
-	yoga::impl::format(printer, "foo{}bar{2}baz{1}\n", "bla", -123, std::make_pair("meow"s, 23));
-	yoga::impl::format(printer, "foo{{{}}}bar{{baz}}", 37);
-	yoga::impl::format(printer, "{{}}");
-	yoga::impl::format(printer, "{{");
-	yoga::impl::format(printer, "\n");
-	yoga::impl::format(printer, "{}", '\n');
+	using namespace yoga::format_literals;
+
+	debug_printer printer;
+	printer.printf("negative-integer: {}\n", -1);
+	printer.printf("0: {}\n", 0);
+	printer.printf("0U: {}\n", 0U);
+	printer.printf("foo{}bar{2}baz{1}\n", "bla", -123, std::make_pair("meow"s, 23));
+	printer.printf("foo{{{}}}bar{{baz}}", 37);
+	printer.printf("{{}}");
+	printer.printf("{{");
+	printer.printf("\n");
+	printer.printf("{}", '\n');
+	printer.printf("{}\n", yoga::fmt(38, 7_w, '0'_f, 13_base));
 	//printer.flush();
 	
 	{

@@ -24,38 +24,9 @@
 
 namespace yoga {
 
-class debug_printer {
-public:
-	debug_printer(): output{std::cout} {}
 
-	void flush() {
-		std::cout << std::flush;
-	}
-
-	~debug_printer() {
-		flush();
-	}
-	
-	template <typename Iterator>
-	void write(Iterator input_start, Iterator input_end) {
-		std::copy(input_start, input_end, std::ostream_iterator<char>{std::cout});
-	}
-
-	void write(char c) {
-		if (c == '\n') {
-			std::cout << "writing newline\n";
-		}
-		std::cout << c;
-	}
-
-	template<std::size_t N>
-	void write(const char(&str)[N]) {
-		write(str, str + N);
-	}
-
-private:
-	std::ostream_iterator<char> output;
-};
+template<typename Self>
+class printer_base;
 
 namespace impl {
 
@@ -159,14 +130,14 @@ private:
 template <typename Output, typename Value>
 class printer<Output, impl::format_pair<Value>> final : public basic_printer<Output> {
 public:
-	printer(Output& output, const Value& value)
+	printer(Output& output, const impl::format_pair<Value>& value)
 	    : basic_printer<Output>{ output }, value{ value } {}
 	void print() const override final {
 		yoga::impl::print(*(this->output), value->value, value->format);
 	}
 
 private:
-	reference<const Value> value;
+	reference<const impl::format_pair<Value>> value;
 };
 
 template <typename Output, typename Value>
@@ -186,7 +157,7 @@ void format(Output& output, const String& str, const Args&... args) {
 	auto it_old = std::begin(str);
 	auto it = find_next(it_old);
 	for(; it_old != end; it = find_next(it_old)) {
-		output.write(it_old, it);
+		output.append(it_old, it);
 		if (it == end) {
 			break;
 		}
@@ -195,7 +166,7 @@ void format(Output& output, const String& str, const Args&... args) {
 			if (it == end or *it != '}') {
 				throw std::invalid_argument{"invalid formatstring"};
 			}
-			output.write('}');
+			output.append('}');
 			++it;
 			it_old = it;
 			continue;
@@ -206,7 +177,7 @@ void format(Output& output, const String& str, const Args&... args) {
 			throw std::invalid_argument{"invalid formatstring"};
 		}
 		if (*it == '{') {
-			output.write('{');
+			output.append('{');
 		} else if (*it == '}') {
 			printers.at(index)->print();
 			++index;
@@ -270,9 +241,8 @@ void print(Output& output, Value value, const impl::print_format& f, integer_tag
 		*it = '-';
 		++it;
 	}
-	auto test = std::string{"some integer"};
 	using r_iterator = decltype(arr.rbegin());
-	output.write(r_iterator{it}, arr.rend());
+	output.append(r_iterator{it}, arr.rend());
 }
 
 
@@ -280,11 +250,11 @@ void print(Output& output, Value value, const impl::print_format& f, integer_tag
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const impl::print_format& f, pair_tag) {
 	
-	output.write('(');
+	output.append('(');
 	print(output, value.first, f);
-	output.write(", ");
+	output.append(", ");
 	print(output, value.second, f);
-	output.write(')');
+	output.append(')');
 }
 
 
@@ -293,7 +263,7 @@ template<typename Tuple, int I, int tupleSize> struct printtuple_helper {
 	template<typename Output>
 	static void print(Output& output, const Tuple& arg, const print_format& f) {
 		print(output, std::get<I-1>(arg), f);
-		output.write(", ");
+		output.append(", ");
 		printtuple_helper<Tuple, I+1, tupleSize>::print(output, arg, f);
 	}
 };
@@ -305,9 +275,9 @@ template<typename Tuple, int I> struct printtuple_helper<Tuple, I, I>{
 };
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const print_format& f, tuple_tag) {
-	output.write('(');
+	output.append('(');
 	impl::printtuple_helper<Value, 1, std::tuple_size<Value>::value>::print(output, value, f);
-	output.write(')');
+	output.append(')');
 }
 
 
@@ -316,7 +286,7 @@ template <typename Output, typename Value>
 void print(Output& output, const Value& value, const print_format&, char_range_tag) {
 	using std::begin;
 	using std::end;
-	output.write(begin(value), end(value));
+	output.append(begin(value), end(value));
 }
 
 
@@ -326,18 +296,18 @@ void print(Output& output, const Value& value, const impl::print_format& f, iter
 	auto it = std::begin(value);
 	auto end = std::end(value);
 	if (it == end) {
-		output.write("[]");
+		output.append("[]");
 		return;
 	}
-	output.write('[');
+	output.append('[');
 	print(output, *it, f);
 	++it;
 	while (it != end) {
-		output.write(", ");
+		output.append(", ");
 		print(output, *it, f);
 		++it;
 	}
-	output.write(']');
+	output.append(']');
 }
 
 
@@ -347,7 +317,7 @@ void print(Output& output, const Value& value, const impl::print_format&, stream
 	std::ostringstream stream;
 	stream << value;
 	auto str = stream.str();
-	output.write(str.begin(), str.end());
+	output.append(str.begin(), str.end());
 }
 
 
@@ -446,6 +416,46 @@ template<typename T> constexpr bool is_streamable() {
 
 
 } // namespace impl
+
+template<typename Self>
+class printer_base {
+public:
+	printer_base() noexcept = default;
+	printer_base(const printer_base&) noexcept = default;
+	printer_base(printer_base&&) noexcept = default;
+
+	printer_base& operator=(const printer_base&) noexcept = default;
+	printer_base& operator=(printer_base&&) noexcept = default;
+
+	~printer_base() {
+		get_self().flush();
+	}
+
+	template<typename...Args>
+	void printf(Args&&... args) {
+		impl::format(get_self(), std::forward<Args>(args)...);
+	}
+	template<typename...Args>
+	void printfln(Args&&... args) {
+		printf(std::forward<Args>(args)...);
+		append('\n');
+	}
+
+	void flush() const noexcept {}
+	
+	template<std::size_t N>
+	void append(const char(&str)[N]) {
+		get_self().append(str, str + N);
+	}
+
+	void append(char c) {
+		get_self().append(&c, &c + 1);
+	}
+private:
+	Self& get_self() {
+		return static_cast<Self&>(*this);
+	}
+};
 
 } // namespace yoga
 
