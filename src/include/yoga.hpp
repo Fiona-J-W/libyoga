@@ -7,6 +7,7 @@
 #include "number_parsing.hpp"
 #include "number_range.hpp"
 #include "pointer.hpp"
+#include "random.hpp"
 #include "tmp.hpp"
 #include "write.hpp"
 #include "yoga.hpp"
