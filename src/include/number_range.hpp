@@ -15,7 +15,7 @@ public:
 	using reference = const Number&;
 	using difference_type = std::ptrdiff_t;
 	using iterator_category = std::random_access_iterator_tag;
-	using pointer = pointer<const Number>;
+	using pointer = ::yoga::pointer<const Number>;
 
 	fixed_number_iterator(): current_value{0} {}
 	fixed_number_iterator(Number start_value): current_value{start_value} {}
@@ -134,7 +134,7 @@ public:
 	using reference = const Number&;
 	using difference_type = std::ptrdiff_t;
 	using iterator_category = std::random_access_iterator_tag;
-	using pointer = pointer<const Number>;
+	using pointer = ::yoga::pointer<const Number>;
 
 	number_iterator(): current_value{0} {}
 	number_iterator(Number start_value): current_value{start_value} {}
@@ -223,7 +223,7 @@ public:
 		}
 	}
 	template<Number Step>
-	number_range(const fixed_number_range& other): m_low{other.m_low()}, m_high{other.m_high()}, m_step{other.m_step()} {}
+	number_range(const fixed_number_range<Number, Step>& other): m_low{other.m_low()}, m_high{other.m_high()}, m_step{other.m_step()} {}
 	number_iterator<Number> begin() const {
 		return {m_low, m_step};
 	}
@@ -268,6 +268,7 @@ fixed_number_range<Number, 1> range(Number low, Number high) {
 template<typename Number>
 number_range<Number> range(Number low, Number high, Number step) {
 	return make_number_range(low, high, step);
+}
 
 } // namespace yoga
 

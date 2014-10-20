@@ -17,6 +17,12 @@ int main() {
 	yoga::impl::format(printer, "0: {}\n", 0);
 	yoga::impl::format(printer, "0U: {}\n", 0U);
 	yoga::impl::format(printer, "foo{}bar{2}baz{1}\n", "bla", -123, std::make_pair("meow"s, 23));
+	yoga::impl::format(printer, "foo{{{}}}bar{{baz}}", 37);
+	yoga::impl::format(printer, "{{}}");
+	yoga::impl::format(printer, "{{");
+	yoga::impl::format(printer, "\n");
+	yoga::impl::format(printer, "{}", '\n');
+	//printer.flush();
 	
 	{
 		using iterator = yoga::fixed_number_iterator<int, 2>;
@@ -26,13 +32,13 @@ int main() {
 		it1++;
 		assert(it1 == it2);
 		assert(*it1 == 4);
-		for(auto num: yoga::make_number_range(0, 7, 2)) {
+		for(auto num: yoga::range(0, 7, 2)) {
 			std::cout << num << '\n';
 		}
-		for(auto num: yoga::make_number_range(3, 9, 4)) {
+		for(auto num: yoga::range<std::size_t>(3, 9, 4)) {
 			std::cout << num << '\n';
 		}
-		for(auto num: yoga::make_number_range<std::size_t, 2>(3, 9)) {
+		for(auto num: yoga::make_fixed_number_range<std::size_t, 2>(3, 9)) {
 			std::cout << num << '\n';
 		}
 	}

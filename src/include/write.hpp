@@ -11,7 +11,7 @@
 #include <cassert>
 #include <iterator>
 #include <cstring>
-#include <strstream>
+#include <sstream>
 
 #include <iostream> // for debugging
 #include <string>
@@ -26,23 +26,10 @@ namespace yoga {
 
 class debug_printer {
 public:
-	using buffer_t = std::vector<char>;
-
-	debug_printer() {
-		buffer.resize(4 * 1024);
-		buffer_begin = buffer.end();
-	}
-
-	debug_printer(debug_printer&& rhs) {
-		buffer = std::move(rhs.buffer);
-		buffer_begin = rhs.buffer_begin;
-	}
-
-	debug_printer& operator=(debug_printer&& rhs) = default;
+	debug_printer(): output{std::cout} {}
 
 	void flush() {
-		std::cout << std::string{ buffer.begin(), buffer_begin } << std::flush;
-		buffer_begin = buffer.begin();
+		std::cout << std::flush;
 	}
 
 	~debug_printer() {
@@ -51,36 +38,23 @@ public:
 	
 	template <typename Iterator>
 	void write(Iterator input_start, Iterator input_end) {
-		auto it = input_start;
-		auto input_size = std::distance(it, input_end);
-		auto output_size = std::distance(buffer_begin, buffer.end());
-		while (input_size > output_size) {
-			buffer_begin = std::copy_n(it, output_size, buffer_begin);
-			input_size -= output_size;
-			it += output_size;
-			flush();
-			output_size = std::distance(buffer_begin, buffer.end());
-		}
-		std::copy_n(it, input_size, buffer_begin);
-		buffer_begin += input_size;
+		std::copy(input_start, input_end, std::ostream_iterator<char>{std::cout});
 	}
 
 	void write(char c) {
-		*buffer_begin = c;
-		++buffer_begin;
-		if (buffer_begin == buffer.end()) {
-			flush();
+		if (c == '\n') {
+			std::cout << "writing newline\n";
 		}
+		std::cout << c;
 	}
 
-	template<unsigned N>
-	void write(char str[N]) {
+	template<std::size_t N>
+	void write(const char(&str)[N]) {
 		write(str, str + N);
 	}
 
 private:
-	buffer_t buffer;
-	buffer_t::iterator buffer_begin;
+	std::ostream_iterator<char> output;
 };
 
 namespace impl {
@@ -206,47 +180,48 @@ void format(Output& output, const String& str, const Args&... args) {
 		{ make_unique_printer(output, args)... }};
 	const auto splitters = std::array<char, 2>{{'{', '}'}};
 	const auto end = std::end(str);
-	const auto find_next = [&](auto it) {return std::find_first_of(it, end, splitters.begin(), splitters.end());}
+	const auto find_next = [&](auto it) {return std::find_first_of(it, end, splitters.begin(), splitters.end());};
 
 	std::size_t index = 0;
-	auto it1 = std::begin(str);
-	auto it2 = find_next(it1);
-	for(; it2 != end; it2 = find_next(it1)) {
-		output,write(it1, it2);
-		if (it2 == end) {
+	auto it_old = std::begin(str);
+	auto it = find_next(it_old);
+	for(; it_old != end; it = find_next(it_old)) {
+		output.write(it_old, it);
+		if (it == end) {
 			break;
 		}
-		if (*it2 == '}') {
-			++it2;
-			if (it2 == end or *it2 != '}') {
+		if (*it == '}') {
+			++it;
+			if (it == end or *it != '}') {
 				throw std::invalid_argument{"invalid formatstring"};
 			}
 			output.write('}');
-			++it2;
+			++it;
+			it_old = it;
 			continue;
 		}
-		assert(*it2 == '{');
-		++it2;
-		if (it2 == end) {
+		assert(*it == '{');
+		++it;
+		if (it == end) {
 			throw std::invalid_argument{"invalid formatstring"};
 		}
-		if (*it2 == '{') {
+		if (*it == '{') {
 			output.write('{');
-		} else if (*it2 == '}') {
+		} else if (*it == '}') {
 			printers.at(index)->print();
 			++index;
-		} else if (std::isdigit(*it2)) {
+		} else if (std::isdigit(*it)) {
 			auto index = std::size_t{};
-			std::tie(index, it2) = str_to<std::size_t>(it2, end);
-			if (it2 == end or *it2 != '}') {
+			std::tie(index, it) = ::yoga::str_to<std::size_t>(it, end);
+			if (it == end or *it != '}') {
 				throw std::invalid_argument{"invalid formatstring"};
 			}
 			printers.at(index)->print();
 		} else {
 			throw std::invalid_argument{"invalid formatstring"};
 		}
-		++it2;
-		it1 = it2;
+		++it;
+		it_old = it;
 	}
 }
 
@@ -254,7 +229,7 @@ void format(Output& output, const String& str, const Args&... args) {
 //////////////////////////////////////////////////////////////////////
 
 template <typename Output, typename Value>
-void print(Output& output, const Value& value, const struct format& f) {
+void print(Output& output, const Value& value, const impl::print_format& f) {
 	print(output, value, f, printable_category_tag<get_printable_category<Value>()>{});
 }
 
