@@ -12,8 +12,6 @@
 #include <iterator>
 #include <cstring>
 #include <sstream>
-
-#include <iostream> // for debugging
 #include <string>
 
 #include "pointer.hpp"
@@ -50,6 +48,7 @@ enum class printable_category {
 	pair,
 	tuple,
 	integer,
+	string_literal,
 	char_range,
 	streamable,
 	iteratable
@@ -60,19 +59,21 @@ template<typename T> constexpr bool is_streamable();
 template<typename T> constexpr bool is_pair();
 template<typename T> constexpr bool is_tuple();
 template<typename T> constexpr bool is_iteratable();
+template<typename T> constexpr bool is_string_literal();
 template<typename T> constexpr bool is_char_range();
 
 template<typename T>
 constexpr printable_category get_printable_category();
 
 template<printable_category Tag> struct printable_category_tag{};
-using pair_tag         = printable_category_tag< printable_category::pair        >;
-using tuple_tag        = printable_category_tag< printable_category::tuple       >;
-using integer_tag      = printable_category_tag< printable_category::integer     >;
-using iteratable_tag   = printable_category_tag< printable_category::iteratable  >;
-using char_range_tag   = printable_category_tag< printable_category::char_range  >;
-using streamable_tag   = printable_category_tag< printable_category::streamable  >;
-using unprintable_tag  = printable_category_tag< printable_category::unprintable >;
+using pair_tag           = printable_category_tag< printable_category::pair          >;
+using tuple_tag          = printable_category_tag< printable_category::tuple         >;
+using integer_tag        = printable_category_tag< printable_category::integer       >;
+using iteratable_tag     = printable_category_tag< printable_category::iteratable    >;
+using string_literal_tag = printable_category_tag< printable_category::string_literal>;
+using char_range_tag     = printable_category_tag< printable_category::char_range    >;
+using streamable_tag     = printable_category_tag< printable_category::streamable    >;
+using unprintable_tag    = printable_category_tag< printable_category::unprintable   >;
 
 
 template <typename Output, typename Value>
@@ -86,6 +87,9 @@ void print(Output& output, Value value,        const impl::print_format&, intege
 
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const impl::print_format&, tuple_tag);
+
+template <typename Output, typename Value>
+void print(Output& output, const Value& value, const impl::print_format&, string_literal_tag);
 
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const impl::print_format&, char_range_tag);
@@ -280,13 +284,17 @@ void print(Output& output, const Value& value, const print_format& f, tuple_tag)
 	output.append(')');
 }
 
+// string-literals
+template <typename Output, typename Value>
+void print(Output& output, const Value& value, const impl::print_format&, string_literal_tag) {
+	output.append(std::begin(value), std::end(value) - 1);
+}
+
 
 // char-Range
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const print_format&, char_range_tag) {
-	using std::begin;
-	using std::end;
-	output.append(begin(value), end(value));
+	output.append(std::begin(value), std::end(value));
 }
 
 
@@ -331,13 +339,14 @@ void print(Output& output, const Value& value, const impl::print_format&, stream
 template<typename T>
 constexpr printable_category get_printable_category() {
 	return
-		is_pair<T>()       ? printable_category::pair        :
-		is_tuple<T>()      ? printable_category::tuple       :
-		is_integer<T>()    ? printable_category::integer     :
-		is_char_range<T>() ? printable_category::char_range  :
-		is_streamable<T>() ? printable_category::streamable  :
-		is_iteratable<T>() ? printable_category::iteratable  :
-		/* else: */          printable_category::unprintable ;
+		is_pair<T>()          ? printable_category::pair           :
+		is_tuple<T>()         ? printable_category::tuple          :
+		is_integer<T>()       ? printable_category::integer        :
+		is_string_literal<T>()? printable_category::string_literal :
+		is_char_range<T>()    ? printable_category::char_range     :
+		is_streamable<T>()    ? printable_category::streamable     :
+		is_iteratable<T>()    ? printable_category::iteratable     :
+		/* else: */             printable_category::unprintable    ;
 }
 
 
@@ -366,6 +375,14 @@ struct is_iteratable_helper {
 };
 template<typename T> constexpr bool is_iteratable() {
 	return decltype(is_iteratable_helper::is_iteratable(std::declval<T>()))::value;
+}
+
+// string-literal
+std::false_type is_string_literal_helper(...);
+template<std::size_t N>
+std::true_type is_string_literal_helper(const char (&)[N]);
+template<typename T> constexpr bool is_string_literal() {
+	return decltype(is_string_literal_helper(std::declval<T>()))::value;
 }
 
 // char-range
@@ -445,7 +462,8 @@ public:
 	
 	template<std::size_t N>
 	void append(const char(&str)[N]) {
-		get_self().append(str, str + N);
+		// don't append the 0-byte:
+		get_self().append(str, str + N - 1);
 	}
 
 	void append(char c) {

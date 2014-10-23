@@ -40,22 +40,35 @@ private:
 };
 
 
-int main() {
+template<typename...Args>
+void test_printf(const std::string& expected, const std::string& format, const Args&... args) {
+	auto printer = string_printer{};
+	printer.printf(format, args...);
+	if (expected != printer.str()) {
+		//assert(printer.str().back() != 0);
+		throw std::logic_error{"printf didn't work for “" + format + "” (expected “" + expected + "”, actual “" + printer.str() + "”)" };
+	}
+}
+	
+
+int main() try {
 	using namespace std::literals;
 	using namespace yoga::format_literals;
 
-	debug_printer printer;
-	printer.printf("negative-integer: {}\n", -1);
-	printer.printf("0: {}\n", 0);
-	printer.printf("0U: {}\n", 0U);
-	printer.printf("foo{}bar{2}baz{1}\n", "bla", -123, std::make_pair("meow"s, 23));
-	printer.printf("foo{{{}}}bar{{baz}}", 37);
-	printer.printf("{{}}");
-	printer.printf("{{");
-	printer.printf("\n");
-	printer.printf("{}", '\n');
-	printer.printf("{}\n", yoga::fmt(38, 7_w, '0'_f, 13_base));
-	//printer.flush();
+	test_printf("foo", "foo");
+	test_printf("foo", "{}", "foo");
+	test_printf("3", "{}", 3);
+	test_printf("-3", "{}", -3);
+	test_printf("x", "{}", 'x');
+	test_printf("4.5", "{}", 4.5);
+	test_printf("{}", "{{}}");
+	test_printf("{3}", "{{3}}");
+	test_printf("{3}", "{{{}}}", 3);
+	test_printf("(3, 7)", "{}", std::make_pair(3, 7));
+	test_printf("[1, 2]", "{}", std::vector<int>{1, 2});
+	test_printf("[(1, a)]", "{}", std::map<int, char>{{1, 'a'}});
+	test_printf("[[foo]]", "{}", std::vector<std::vector<std::string>>{{"foo"}});
+	//test_printf("", "{}", );
 	
 	{
 		using iterator = yoga::fixed_number_iterator<int, 2>;
@@ -65,14 +78,31 @@ int main() {
 		it1++;
 		assert(it1 == it2);
 		assert(*it1 == 4);
-		for(auto num: yoga::range(0, 7, 2)) {
-			std::cout << num << '\n';
-		}
-		for(auto num: yoga::range<std::size_t>(3, 9, 4)) {
-			std::cout << num << '\n';
-		}
-		for(auto num: yoga::make_fixed_number_range<std::size_t, 2>(3, 9)) {
-			std::cout << num << '\n';
-		}
 	}
+	{
+		std::vector<int> vec;
+		for(auto num: yoga::range(0, 7, 2)) {
+			vec.push_back(num);
+		}
+		auto expected = std::vector<int>{0,2,4,6};
+		assert(vec == expected);
+	}
+	{
+		std::vector<std::size_t> vec;
+		for(auto num: yoga::range<std::size_t>(3, 9, 4)) {
+			vec.push_back(num);
+		}
+		auto expected = std::vector<std::size_t>{3,7};
+		assert(vec == expected);
+	}
+	{
+		std::vector<std::size_t> vec;
+		for(auto num: yoga::make_fixed_number_range<std::size_t, 2>(3, 9)) {
+			vec.push_back(num);
+		}
+		auto expected = std::vector<std::size_t>{3,5,7};
+		assert(vec == expected);
+	}
+} catch(std::exception& e) {
+	std::cerr << "Error: " << e.what() << '\n';
 }
