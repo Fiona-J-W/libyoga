@@ -4,6 +4,7 @@
 #include "enforce.hpp"
 #include "format.hpp"
 #include "integer_literals.hpp"
+#include "multi_range.hpp"
 #include "number_parsing.hpp"
 #include "number_range.hpp"
 #include "pointer.hpp"

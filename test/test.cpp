@@ -7,7 +7,6 @@
 #include <string>
 
 #include "../src/include/yoga.hpp"
-#include "../src/include/multi_range.hpp"
 
 class debug_printer: public yoga::printer_base<debug_printer> {
 public:
@@ -108,7 +107,7 @@ int main() try {
 		auto printer = debug_printer{};
 		using intvec = std::vector<int>;
 		auto results = std::vector<std::pair<int, int>>();
-		for(auto x: yoga::multi_range<intvec, intvec>{intvec{1,2,3}, intvec{3,4,5}}) {
+		for(auto x: yoga::make_multi_range(intvec{1,2,3}, yoga::range<int>(3, 6))) {
 			int i1,i2;
 			std::tie(i1, i2) = x;
 			results.emplace_back(i1, i2);

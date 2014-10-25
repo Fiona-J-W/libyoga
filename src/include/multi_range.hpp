@@ -8,10 +8,14 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "pointer.hpp"
+
 namespace yoga {
 
 template<typename MultiRange> class multi_iterator;
 template<typename... Ranges> class multi_range;
+
+template<typename... Ranges> multi_range<Ranges...> make_multi_range(Ranges&&...);
 
 namespace impl {
 template<std::size_t I> struct index_t : std::integral_constant<std::size_t, I> {};
@@ -54,7 +58,7 @@ template<typename MultiRange>
 class multi_iterator {
 public:
 	template<typename...Args>
-	multi_iterator(MultiRange& mr, Args&&... args): m_multi_range{&mr}, m_iterators{std::forward<Args>(args)...} {}
+	multi_iterator(MultiRange& mr, Args&&... args): m_multi_range{mr}, m_iterators{std::forward<Args>(args)...} {}
 
 	friend bool operator==(const multi_iterator& lhs, const multi_iterator& rhs) {return lhs.m_iterators == rhs.m_iterators;}
 	friend bool operator!=(const multi_iterator& lhs, const multi_iterator& rhs) {return !(lhs == rhs);}
@@ -66,7 +70,7 @@ public:
 	auto operator->() {return dereference();}
 
 private:
-	MultiRange* m_multi_range; // TODO: use yoga::reference
+	reference<MultiRange> m_multi_range; // TODO: use yoga::reference
 	typename MultiRange::iterator_tuple_t m_iterators;
 
 	constexpr static std::size_t num_ranges() {return MultiRange::num_ranges();}
@@ -116,6 +120,9 @@ bool multi_iterator<MultiRange>::increment(impl::index_t<0>) {
 	return !(it == range.end());
 }
 
+template<typename... Ranges> multi_range<Ranges...> make_multi_range(Ranges&&... ranges) {
+	return multi_range<Ranges...>{std::forward<Ranges>(ranges)...};
+}
 
 } // namespace yoga
 
