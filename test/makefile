@@ -7,7 +7,7 @@
 
 
 CXX ?= g++
-FLAGS +=  -Wall -Wextra -Wpedantic -std=c++1y -O0 -D_GLIBCXX_DEBUG -g 
+FLAGS +=  -Wall -Wextra -Wpedantic -std=c++1y 
 LIBS += 
 INCLUDES += 
 TARGET = ../bin/tests

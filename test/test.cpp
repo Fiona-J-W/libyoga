@@ -7,6 +7,7 @@
 #include <string>
 
 #include "../src/include/yoga.hpp"
+#include "../src/include/multi_range.hpp"
 
 class debug_printer: public yoga::printer_base<debug_printer> {
 public:
@@ -102,6 +103,20 @@ int main() try {
 		}
 		auto expected = std::vector<std::size_t>{3,5,7};
 		assert(vec == expected);
+	}
+	{
+		auto printer = debug_printer{};
+		using intvec = std::vector<int>;
+		auto results = std::vector<std::pair<int, int>>();
+		for(auto x: yoga::multi_range<intvec, intvec>{intvec{1,2,3}, intvec{3,4,5}}) {
+			int i1,i2;
+			std::tie(i1, i2) = x;
+			results.emplace_back(i1, i2);
+		}
+		auto expected = std::vector<std::pair<int,int>>{{1,3}, {1,4}, {1,5},{2,3}, {2,4}, {2,5},{3,3}, {3,4}, {3,5}};
+		assert(results == expected);
+
+
 	}
 } catch(std::exception& e) {
 	std::cerr << "Error: " << e.what() << '\n';
