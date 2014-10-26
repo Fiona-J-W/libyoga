@@ -265,22 +265,22 @@ void print(Output& output, const Value& value, const impl::print_format& f, pair
 // Tuple
 template<typename Tuple, int I, int tupleSize> struct printtuple_helper {
 	template<typename Output>
-	static void print(Output& output, const Tuple& arg, const print_format& f) {
+	static void print_(Output& output, const Tuple& arg, const print_format& f) {
 		print(output, std::get<I-1>(arg), f);
 		output.append(", ");
-		printtuple_helper<Tuple, I+1, tupleSize>::print(output, arg, f);
+		printtuple_helper<Tuple, I+1, tupleSize>::print_(output, arg, f);
 	}
 };
 template<typename Tuple, int I> struct printtuple_helper<Tuple, I, I>{
 	template<typename Output>
-	static void print(Output& output, const Tuple& arg, const print_format& f) {
+	static void print_(Output& output, const Tuple& arg, const print_format& f) {
 		print(output, std::get<I-1>(arg), f);
 	}
 };
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const print_format& f, tuple_tag) {
 	output.append('(');
-	impl::printtuple_helper<Value, 1, std::tuple_size<Value>::value>::print(output, value, f);
+	impl::printtuple_helper<Value, 1, std::tuple_size<Value>::value>::print_(output, value, f);
 	output.append(')');
 }
 

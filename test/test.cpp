@@ -50,6 +50,10 @@ void test_printf(const std::string& expected, const std::string& format, const A
 	}
 }
 	
+using some_multirange = yoga::multi_range<std::vector<int>, std::vector<int>>&;
+static_assert(std::is_same<decltype(std::begin(std::declval<some_multirange>())),
+                           decltype(  std::end(std::declval<some_multirange>()))>::value, "");
+static_assert(std::is_same<std::iterator_traits<decltype(std::begin(std::declval<some_multirange>()))>::iterator_category, std::forward_iterator_tag>::value, "");
 
 int main() try {
 	using namespace std::literals;
@@ -65,6 +69,7 @@ int main() try {
 	test_printf("{3}", "{{3}}");
 	test_printf("{3}", "{{{}}}", 3);
 	test_printf("(3, 7)", "{}", std::make_pair(3, 7));
+	test_printf("(3, 7)", "{}", std::make_tuple(3, 7));
 	test_printf("[1, 2]", "{}", std::vector<int>{1, 2});
 	test_printf("[(1, a)]", "{}", std::map<int, char>{{1, 'a'}});
 	test_printf("[[foo]]", "{}", std::vector<std::vector<std::string>>{{"foo"}});
@@ -114,8 +119,10 @@ int main() try {
 		}
 		auto expected = std::vector<std::pair<int,int>>{{1,3}, {1,4}, {1,5},{2,3}, {2,4}, {2,5},{3,3}, {3,4}, {3,5}};
 		assert(results == expected);
-
-
+	}
+	{
+		auto printer = debug_printer{};
+		printer.printf("{}\n", yoga::make_multi_range(yoga::range<int>(3,9,2), yoga::range(7,3, -1)));
 	}
 } catch(std::exception& e) {
 	std::cerr << "Error: " << e.what() << '\n';
