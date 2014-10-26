@@ -120,9 +120,9 @@ void multi_iterator<MultiRange>::increment(Index) {
 	auto& range = m_multi_range->template get<Index::value>();
 	auto& it = std::get<Index::value>(m_iterators);
 	++it;
-	if (it == range.end()) {
+	if (it == std::end(range)) {
 		increment(impl::index_t<Index::value - 1>{});
-		it = range.begin();
+		it = std::begin(range);
 	}
 }
 
