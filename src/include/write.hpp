@@ -149,6 +149,15 @@ std::unique_ptr<basic_printer<Output> > make_unique_printer(Output& output, cons
 	return std::make_unique<printer<Output, Value> >(output, value);
 }
 
+template <typename Output, typename... Args>
+void print(Output& output, const Args&... args) {
+	const auto printers = std::array<std::unique_ptr<basic_printer<Output> >, sizeof...(Args)>{
+		{ make_unique_printer(output, args)... }};
+	for (auto& printer: printers) {
+		printer->print();
+	}
+}
+
 template <typename Output, typename String, typename... Args>
 void format(Output& output, const String& str, const Args&... args) {
 	const auto printers = std::array<std::unique_ptr<basic_printer<Output> >, sizeof...(Args)>{
@@ -456,6 +465,16 @@ public:
 	void printfln(Args&&... args) {
 		printf(std::forward<Args>(args)...);
 		append('\n');
+	}
+
+	template<typename...Args>
+	void print(Args&&... args) {
+		impl::print(get_self(), std::forward<Args>(args)...);
+	}
+
+	template<typename...Args>
+	void println(Args&&... args) {
+		print(std::forward<Args>(args)..., '\n');
 	}
 
 	void flush() const noexcept {}

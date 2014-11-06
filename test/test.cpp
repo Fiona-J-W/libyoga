@@ -122,7 +122,7 @@ int main() try {
 	}
 	{
 		auto printer = debug_printer{};
-		printer.printf("{}\n", yoga::make_multi_range(yoga::range<int>(3,9,2), yoga::range(7,3, -1)));
+		printer.println(yoga::make_multi_range(yoga::range<int>(3,9,2), yoga::range(7,3, -1)));
 	}
 } catch(std::exception& e) {
 	std::cerr << "Error: " << e.what() << '\n';
