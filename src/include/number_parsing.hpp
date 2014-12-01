@@ -66,6 +66,34 @@ std::tuple<Number, CharIterator> str_to(CharIterator it, CharIterator end) {
 
 namespace impl {
 
+template<typename CharIterator>
+std::tuple<bool, CharIterator> parse_sign(CharIterator it, CharIterator last, std::true_type) {
+	assert(it != last);
+	bool is_negative = false;
+	switch(*it) {
+		case '-':
+			is_negative = true;
+		// fallthrough
+		case '+':
+			++it;
+			if (it == last) {
+				throw std::invalid_argument{
+					"string contains no digits after sign"
+				};
+			}
+			break;
+		default:
+			break;
+	}
+	return std::make_tuple(is_negative, it);
+}
+
+template<typename CharIterator>
+std::tuple<bool, CharIterator> parse_sign(CharIterator it, CharIterator, std::false_type) {
+	return std::make_tuple(false, it);
+}
+
+
 template <typename Integer, typename CharIterator, typename ValidationPolicy>
 std::tuple<Integer, CharIterator> str_to(CharIterator it, const CharIterator end, integer_tag_parser) {
 	using impl::drop_spaces;
@@ -75,24 +103,8 @@ std::tuple<Integer, CharIterator> str_to(CharIterator it, const CharIterator end
 	std::tie(it, c) = drop_spaces(it, end);
 
 	bool is_negative = false;
-	if (std::is_signed<Integer>::value) { // this should be optimized away entirely
-		switch (c) {
-		case '-':
-			is_negative = true;
-		// fallthrough
-		case '+':
-			++it;
-			if (it == end) {
-				throw std::invalid_argument{
-					"string contains no digits after sign"
-				};
-			}
-			c = *it;
-			break;
-		default:
-			break;
-		}
-	}
+	std::tie(is_negative, it) = parse_sign(it, end, std::is_signed<Integer>{});
+	c = *it;
 
 	if (!isdigit(c)) {
 		throw std::invalid_argument{ "string contains no digits" };
@@ -158,29 +170,14 @@ std::tuple<Real, CharIterator> str_to(CharIterator it, const CharIterator end, r
 	ValidationPolicy::enforce(it != end);
 
 	// set sign:
-	switch (c) {
-	case '-':
-		is_negative = true;
-	// fallthrough
-	case '+':
-		++it;
-		if (it == end) {
-			throw std::invalid_argument{ "string contains no digits" };
-		}
-		c = *it;
-		break;
-	default:
-		break;
-	}
+	std::tie(is_negative, it) = parse_sign(it, end, std::true_type{});
+	c = *it;
 
 	// number of decimal digits that can be stored in the mantissa and the used integer
 	unsigned remainingDigits = std::numeric_limits<Real>::max_digits10;
 
 	// read 'big' part of the mantissa:
-	while (remainingDigits > 0) {
-		if (!isdigit(c)) {
-			break;
-		}
+	while (remainingDigits > 0 && isdigit(c)) {
 		--remainingDigits;
 		mantissa *= 10;
 		mantissa += c - '0';
@@ -213,10 +210,7 @@ std::tuple<Real, CharIterator> str_to(CharIterator it, const CharIterator end, r
 			return make_return_value();
 		}
 		c = *it;
-		while (remainingDigits > 0) {
-			if (!isdigit(c)) {
-				break;
-			}
+		while (remainingDigits > 0 && isdigit(c)) {
 			--exp;
 			--remainingDigits;
 			mantissa *= 10;
