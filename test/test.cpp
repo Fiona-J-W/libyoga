@@ -64,7 +64,7 @@ int main() try {
 	test_printf("3", "{}", 3);
 	test_printf("-3", "{}", -3);
 	test_printf("x", "{}", 'x');
-	test_printf("4.5", "{}", 4.5);
+	test_printf("4.5", "{}", yoga::fmt(4.5));
 	test_printf("{}", "{{}}");
 	test_printf("{3}", "{{3}}");
 	test_printf("{3}", "{{{}}}", 3);
