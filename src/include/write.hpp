@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <memory>
 #include <vector>
 #include <utility>
@@ -13,12 +14,14 @@
 #include <cstring>
 #include <sstream>
 #include <string>
+#include <iostream>
 
 #include "pointer.hpp"
 #include "enforce.hpp"
 #include "number_parsing.hpp"
 #include "tmp.hpp"
 #include "format.hpp"
+#include "util.hpp"
 
 namespace yoga {
 
@@ -160,9 +163,9 @@ void print(Output& output, const Args&... args) {
 
 template <typename Output, typename String, typename... Args>
 void format(Output& output, const String& str, const Args&... args) {
-	const auto printers = std::array<std::unique_ptr<basic_printer<Output> >, sizeof...(Args)>{
-		{ make_unique_printer(output, args)... }};
-	const auto splitters = std::array<char, 2>{{'{', '}'}};
+	const auto printers = make_array_of<std::unique_ptr<basic_printer<Output>>>(
+		make_unique_printer(output, args)...);
+	const auto splitters = make_array('{', '}');
 	const auto end = std::end(str);
 	const auto find_next = [&](auto it) {return std::find_first_of(it, end, splitters.begin(), splitters.end());};
 
@@ -493,6 +496,47 @@ private:
 		return static_cast<Self&>(*this);
 	}
 };
+
+class ostream_writer: public printer_base<ostream_writer> {
+public:
+	ostream_writer(std::ostream& stream): m_stream{stream} {}
+	template<typename Iterator>
+	void append(Iterator first, Iterator last) {
+		std::copy(first, last, std::ostream_iterator<char>{*m_stream});
+	}
+private:
+	reference<std::ostream> m_stream;
+};
+
+
+#if 0 // this is work in progress:
+class file_writer: public printer_base<file_writer> {
+public:
+	static struct append_t{} append;
+	
+	file_writer(const std::string& str): file_writer{str.c_str()} {}
+	file_writer(const char* path): m_file{std::fopen(path, "w")} {}
+	file_writer(const char* path, append_t): m_file{std::fopen(path, "a")} {}
+
+	file_writer(file_writer&& other): m_file{other.m_file} {other.m_file = nullptr;}
+	file_writer& operator=(file_writer&& other) {std::swap(m_file, other.m_file); return *this;}
+	~file_writer() {if(m_file) std::fclose(m_file);}
+
+	void flush() {if (m_file) {fflush(m_file);}}
+	
+	template<typename Iterator>
+	void append(Iterator first, Iterator last) {
+
+	}
+private:
+	FILE* m_file = nullptr;
+};
+
+void test_file_writer() {
+	auto file = file_writer("foo", file_writer::append);
+}
+
+#endif
 
 } // namespace yoga
 
