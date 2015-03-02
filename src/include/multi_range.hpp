@@ -1,6 +1,6 @@
 
-#ifndef MULTI_RANGE_HPP
-#define MULTI_RANGE_HPP
+#ifndef YOGA_MULTI_RANGE_HPP
+#define YOGA_MULTI_RANGE_HPP
 
 #include <utility>
 #include <iterator>

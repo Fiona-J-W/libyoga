@@ -124,6 +124,10 @@ int main() try {
 		auto printer = debug_printer{};
 		printer.println(yoga::make_multi_range(yoga::range<int>(3,9,2), yoga::range(7,3, -1)));
 	}
+	{
+		auto printer = debug_printer{};
+		printer.println(yoga::make_filter_range(yoga::range(-10, 10), [](int i){return i > 0 or (i % 3) == 0;}));
+	}
 } catch(std::exception& e) {
 	std::cerr << "Error: " << e.what() << '\n';
 }

@@ -82,6 +82,8 @@ public:
 	friend bool operator>(fixed_number_iterator lhs, fixed_number_iterator rhs) { return rhs < lhs; }
 	friend bool operator<=(fixed_number_iterator lhs, fixed_number_iterator rhs) { return !(rhs < lhs); }
 	friend bool operator>=(fixed_number_iterator lhs, fixed_number_iterator rhs) { return !(lhs > rhs); }
+	friend difference_type operator-(fixed_number_iterator lhs, fixed_number_iterator rhs) {
+		return (lhs.current_value - rhs.current_value)/Step; }
 private:
 	Number current_value;
 };

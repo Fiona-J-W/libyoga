@@ -103,6 +103,9 @@ void print(Output& output, const Value& value, const impl::print_format&, iterat
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const impl::print_format&, streamable_tag);
 
+// declared but not deleted to keep errors clean but fail during linking as a last resort:
+template <typename Output, typename Value>
+void print(Output& output, const Value& value, const impl::print_format&, unprintable_tag);
 
 
 
@@ -217,7 +220,10 @@ void format(Output& output, const String& str, const Args&... args) {
 
 template <typename Output, typename Value>
 void print(Output& output, const Value& value, const impl::print_format& f) {
-	print(output, value, f, printable_category_tag<get_printable_category<Value>()>{});
+	constexpr auto print_category = get_printable_category<Value>();
+	static_assert(print_category != printable_category::unprintable,
+			"Unprintable types cannot be printed (obviously)");
+	print(output, value, f, printable_category_tag<print_category>{});
 }
 
 // Integer
