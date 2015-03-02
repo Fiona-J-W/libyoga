@@ -65,6 +65,8 @@ int main() try {
 	test_printf("-3", "{}", -3);
 	test_printf("x", "{}", 'x');
 	test_printf("4.5", "{}", yoga::fmt(4.5));
+	//test_printf("4.500", "{}", yoga::fmt(4.5, 3_p)); // TODO: doesn't work yet
+	test_printf("010", "{}", yoga::fmt(8, 3_w, '0'_f, 8_base));
 	test_printf("{}", "{{}}");
 	test_printf("{3}", "{{3}}");
 	test_printf("{3}", "{{{}}}", 3);
@@ -72,7 +74,9 @@ int main() try {
 	test_printf("(3, 7)", "{}", std::make_tuple(3, 7));
 	test_printf("[1, 2]", "{}", std::vector<int>{1, 2});
 	test_printf("[(1, a)]", "{}", std::map<int, char>{{1, 'a'}});
-	test_printf("[[foo]]", "{}", std::vector<std::vector<std::string>>{{"foo"}});
+	test_printf("[(1, [foo])]", "{}", std::vector<std::pair<int, std::forward_list<std::string>>>{{1, {"foo"}}});
+	test_printf("2 1", "{1} {0}", 1, 2);
+	test_printf("foo 010 [1, 2]", "{} {2} {1}", "foo", std::vector<int>{1, 2}, yoga::fmt(8, 3_w, '0'_f, 8_base));
 	//test_printf("", "{}", );
 	
 	{
@@ -130,4 +134,5 @@ int main() try {
 	}
 } catch(std::exception& e) {
 	std::cerr << "Error: " << e.what() << '\n';
+	return 2;
 }
