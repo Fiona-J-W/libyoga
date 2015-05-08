@@ -1,0 +1,2 @@
+language: cpp
+script: mkdir bin && cd test && make && cd .. && bin/tests
